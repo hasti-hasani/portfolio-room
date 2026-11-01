@@ -31,3 +31,7 @@ The Metropolitan Museum of Art, Open Access (CC0), via Wikimedia Commons
 
 Note: all Poly Haven textures were converted to WebP (roughness maps greyscale 512 px, small objects 512 px),
 and the soil mesh inside potted_plant_02 was simplified. The chair's painted colour map was removed (the page uses oak).
+
+Code and fonts served from vendor/ (copied unmodified, so the page doesn't depend on a CDN or Google Fonts)
+  vendor/three/                             three.js r160 and the examples/jsm files it uses — MIT License, © three.js authors
+  vendor/fonts/                             DM Sans, DM Serif Display (latin subset, from Google Fonts) — SIL Open Font License 1.1

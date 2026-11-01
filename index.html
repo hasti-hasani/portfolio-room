@@ -4,9 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>My Studio</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<!-- fonts and three.js are served from this site (vendor/): one fast host instead of Google and a CDN -->
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
 <style>
   :root {
     --cream: #fbf5ef; --panel: #fffaf5; --ink: #3b3540; --muted: #857b86;
@@ -103,8 +102,8 @@
 <script>document.write('<script src="content.js?v=' + Date.now() + '"><\/script>');</script>
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three": "./vendor/three/build/three.module.min.js",
+  "three/addons/": "./vendor/three/examples/jsm/"
 } }
 </script>
 </head>
@@ -422,7 +421,7 @@ const PLASTER = HQ ? pbr('plastered_wall_04', [2, 1], 'nr', 0.5) : {};
 // Palette colours that become real wood when the photo textures are available
 const SURFACE = new Map(HQ ? [[C.woodLight, { color: 0xfff4e8, ...OAK }], [C.wood, { color: 0xe2bf9c, ...OAK }]] : []);
 
-if (HQ) new RGBELoader(manager).load('assets/hdri/lythwood_room_512.hdr', t => {
+if (HQ) new RGBELoader(manager).load(`assets/hdri/lythwood_room_${isTouch ? 256 : 512}.hdr`, t => {
   t.mapping = THREE.EquirectangularReflectionMapping;
   scene.environment = t;
 });
@@ -815,7 +814,7 @@ const rugTex = canvasTex(1024, 700, (g, w, h) => {
 const RUG = { x: 1.25, z: 0.2, w: 2.8, d: 2.0 };   // the edge near the couch runs just under its front legs
 // A 16th-century silk Kashan carpet photographed by The Met (public domain), with a woven-pile bump on top
 const rugMat = HQ
-  ? mat(0xfff6ee, { map: tex('rug/silk_kashan_carpet_met.webp', null, true), normalMap: tex(`textures/rough_linen/rough_linen_nor_gl_${RES}.webp`, [5, 3.5]), roughness: 1 })
+  ? mat(0xfff6ee, { map: tex(`rug/silk_kashan_carpet_met${isTouch ? '_1024' : ''}.webp`, null, true), normalMap: tex(`textures/rough_linen/rough_linen_nor_gl_${RES}.webp`, [5, 3.5]), roughness: 1 })
   : mat(0xffffff, { map: rugTex, roughness: 1 });
 // The rug lies with its long side running toward the door (RUG.w is along z)
 const rugGroup = new THREE.Group();
@@ -901,9 +900,64 @@ if (isTouch) plant(2.45, 0, -2.05, 1.5, C.cream);
 else model('potted_plant_02', [
   { x: 2.45, z: -2.05, height: 1.15, fallback: () => plant(2.45, 0, -2.05, 1.5, C.cream) },
 ]);
-// the two small ones, on the window sill and the top of the bookshelf, are drawn
+// the small one on the window sill is drawn
 plant(1.6, WIN.y0, -Z - 0.02, 0.5, C.blue);
-plant(-2.82, 1.89, -0.4, 0.45, C.cream);
+
+// A snake plant on top of the bookshelf: stiff upright blades with pale yellow edges, in a ribbed cream pot
+{
+  const g = new THREE.Group();
+  g.position.set(-2.8, 1.89, -0.4);
+  scene.add(g);
+  const r = (s => () => (s = s * 16807 % 2147483647) / 2147483647)(53);
+  const potPts = [[0, 0], [0.07, 0], [0.08, 0.01], [0.085, 0.13], [0.093, 0.135], [0.093, 0.15], [0.08, 0.15], [0.078, 0.04], [0, 0.04]];
+  const potMat = mat(C.cream), ribGeo = new THREE.CylinderGeometry(0.006, 0.006, 0.12, 5);
+  const pot = new THREE.Mesh(new THREE.LatheGeometry(potPts.map(([x, y]) => new THREE.Vector2(x, y)), 24), potMat);
+  for (let i = 0; i < 12; i++) {   // ribs down the outside
+    const a = i / 12 * Math.PI * 2;
+    const rib = new THREE.Mesh(ribGeo, potMat);
+    rib.position.set(Math.cos(a) * 0.083, 0.07, Math.sin(a) * 0.083);
+    pot.add(rib);
+  }
+  const soil = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), mat(0x5a4636, { roughness: 1 }));
+  soil.rotation.x = -Math.PI / 2;
+  soil.position.y = 0.135;
+  pot.castShadow = pot.receiveShadow = true;
+  g.add(pot, soil);
+
+  // one blade: a strip that is narrow at the base, widest a third of the way up and pointed at the tip,
+  // cupped across its width; vertex colours make the edges yellow and the middle dark green
+  const ROWS = 10, COLS = [-1, -0.75, 0, 0.75, 1];
+  const pos = [], col = [], idx = [];
+  const edge = new THREE.Color(0xd9d08c), mid = new THREE.Color(0x5d8a58);
+  for (let j = 0; j <= ROWS; j++) {
+    const t = j / ROWS, w = 0.5 * (t < 0.35 ? 0.6 + 0.4 * t / 0.35 : (1 - t) / 0.65);
+    for (const c of COLS) {
+      pos.push(c * w, t, 0.18 * (c * w) ** 2 * 4);
+      const k = Math.abs(c) > 0.9 ? edge : mid;
+      col.push(k.r, k.g, k.b);
+    }
+  }
+  for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS.length - 1; i++) {
+    const a = j * COLS.length + i, b = a + COLS.length;
+    idx.push(a, b, a + 1, a + 1, b, b + 1);
+  }
+  const blade = new THREE.BufferGeometry();
+  blade.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  blade.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  blade.setIndex(idx);
+  blade.computeVertexNormals();
+  const bladeMat = mat(0xffffff, { vertexColors: true, side: THREE.DoubleSide, roughness: 0.55 });
+  for (let i = 0; i < 9; i++) {
+    const a = i / 9 * Math.PI * 2 + r() * 0.6, rad = i < 3 ? 0.01 : 0.035 + r() * 0.02;
+    const leaf = new THREE.Mesh(blade, bladeMat);
+    leaf.position.set(Math.cos(a) * rad, 0.13, Math.sin(a) * rad);
+    leaf.scale.set(0.05 + r() * 0.015, (i < 3 ? 0.36 : 0.22) + r() * 0.1, 0.05);
+    leaf.rotation.set(0, -a + Math.PI / 2 + (r() - 0.5) * 0.8, 0, 'YXZ');
+    leaf.rotateX(i < 3 ? 0.05 : 0.15 + r() * 0.15);   // the outer blades lean out a little
+    leaf.castShadow = true;
+    g.add(leaf);
+  }
+}
 addCollider(2.15, 2.75, -2.35, -1.75);
 
 // Hanging pothos in the corner by the desk: a pot on three cords from the ceiling, vines trailing over the rim.
@@ -1730,10 +1784,10 @@ if (HQ) {
   // still life above the couch (Bahman Mohassess), in a slim wooden frame
   const stillLife = new THREE.Group();
   scene.add(stillLife);
-  const PW = 1.15, PH = PW * 760 / 1200;
-  part(stillLife, C.wood, X - 0.045, X, 1.72 - PH / 2 - 0.035, 1.72 + PH / 2 + 0.035, 0.2 - PW / 2 - 0.035, 0.2 + PW / 2 + 0.035, 0.008);
-  painting('still-life-fish.webp', PW, PH, X - 0.047, 1.72, 0.2, -Math.PI / 2, stillLife);
-  artInfo(stillLife, 'stillLife', [0.6, 0.2, X, 1.72, 0.2], { w: PW + 0.07, h: PH + 0.07 });   // as close as the couch allows
+  const PW = 1.45, PH = PW * 760 / 1200;
+  part(stillLife, C.wood, X - 0.045, X, 1.68 - PH / 2 - 0.035, 1.68 + PH / 2 + 0.035, 0.2 - PW / 2 - 0.035, 0.2 + PW / 2 + 0.035, 0.008);
+  painting('still-life-fish.webp', PW, PH, X - 0.047, 1.68, 0.2, -Math.PI / 2, stillLife);
+  artInfo(stillLife, 'stillLife', [0.6, 0.2, X, 1.68, 0.2], { w: PW + 0.07, h: PH + 0.07 });   // as close as the couch allows
 
   // the mask (Mansour Ghandriz), large, on the wall between the rack and the door: oak frame around a cream mount
   const mask = new THREE.Group();
