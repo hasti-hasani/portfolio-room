@@ -15,7 +15,7 @@ Music (CC BY 3.0, https://creativecommons.org/licenses/by/3.0/)
 Kenney (https://kenney.nl, CC0)
   sounds/*.ogg                              from the "RPG Audio" pack — see sounds/README.txt for which file is which
 
-Poly Haven (https://polyhaven.com, CC0)
+Poly Haven (https://polyhaven.com, CC0) — texture sets also have _512 copies (halved) that phones load
   hdri/lythwood_room_512.hdr                Lythwood Room (1k version halved to 512 px)
   textures/laminate_floor_02                Laminate Floor 02
   textures/white_oak_veneer                 White Oak Veneer
@@ -23,7 +23,6 @@ Poly Haven (https://polyhaven.com, CC0)
   textures/rough_linen                      Rough Linen
   textures/velour_velvet                    Velour Velvet
   models/potted_plant_02                    Potted Plant 02
-  models/potted_plant_04                    Potted Plant 04
 
 The Metropolitan Museum of Art, Open Access (CC0), via Wikimedia Commons
   rug/silk_kashan_carpet_met.webp            Silk Kashan Carpet, Iran, 16th century (MET DT5436)

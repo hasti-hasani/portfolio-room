@@ -390,12 +390,17 @@ if (HQ && !isTouch) {
 // ---------- assets (all CC0 — see assets/CREDITS.txt) ----------
 const manager = new THREE.LoadingManager();
 const texLoader = new THREE.TextureLoader(manager);
-const gltfLoader = new GLTFLoader(manager);
+// Paintings and the big plant don't hold up "Step inside": they load on their own and appear when ready
+const lateManager = new THREE.LoadingManager();
+const lateTexLoader = new THREE.TextureLoader(lateManager);
+const gltfLoader = new GLTFLoader(lateManager);
+const RES = isTouch ? '512' : '1k';   // phones get half-size texture sets: as sharp on a small screen, a quarter of the download
 const ENV = 0.9;   // how strongly the HDRI lights the room
 let envK = 1;      // the night mood dims it
 
-function tex(path, repeat, color = false) {
-  const t = texLoader.load(`assets/${path}`);
+// `onLate`: load it on the side (see lateManager) and call this once the picture is in
+function tex(path, repeat, color = false, onLate) {
+  const t = onLate ? lateTexLoader.load(`assets/${path}`, onLate) : texLoader.load(`assets/${path}`);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   if (repeat) t.repeat.set(...repeat);
   if (color) t.colorSpace = THREE.SRGBColorSpace;
@@ -405,9 +410,9 @@ function tex(path, repeat, color = false) {
 // A Poly Haven texture set; `maps` picks diffuse (d), normal (n) and roughness (r)
 function pbr(id, repeat, maps = 'dnr', normalScale = 1) {
   const p = `textures/${id}/${id}_`, o = { roughness: 1 };
-  if (maps.includes('d')) o.map = tex(`${p}diff_1k.webp`, repeat, true);
-  if (maps.includes('n')) { o.normalMap = tex(`${p}nor_gl_1k.webp`, repeat); o.normalScale = new THREE.Vector2(normalScale, normalScale); }
-  if (maps.includes('r')) o.roughnessMap = tex(`${p}rough_1k.webp`, repeat);
+  if (maps.includes('d')) o.map = tex(`${p}diff_${RES}.webp`, repeat, true);
+  if (maps.includes('n')) { o.normalMap = tex(`${p}nor_gl_${RES}.webp`, repeat); o.normalScale = new THREE.Vector2(normalScale, normalScale); }
+  if (maps.includes('r')) o.roughnessMap = tex(`${p}rough_${RES}.webp`, repeat);
   return o;
 }
 
@@ -810,7 +815,7 @@ const rugTex = canvasTex(1024, 700, (g, w, h) => {
 const RUG = { x: 1.25, z: 0.2, w: 2.8, d: 2.0 };   // the edge near the couch runs just under its front legs
 // A 16th-century silk Kashan carpet photographed by The Met (public domain), with a woven-pile bump on top
 const rugMat = HQ
-  ? mat(0xfff6ee, { map: tex('rug/silk_kashan_carpet_met.webp', null, true), normalMap: tex('textures/rough_linen/rough_linen_nor_gl_1k.webp', [5, 3.5]), roughness: 1 })
+  ? mat(0xfff6ee, { map: tex('rug/silk_kashan_carpet_met.webp', null, true), normalMap: tex(`textures/rough_linen/rough_linen_nor_gl_${RES}.webp`, [5, 3.5]), roughness: 1 })
   : mat(0xffffff, { map: rugTex, roughness: 1 });
 // The rug lies with its long side running toward the door (RUG.w is along z)
 const rugGroup = new THREE.Group();
@@ -894,10 +899,9 @@ function place(src, { x, y = 0, z, height, rotY = 0, tweak }) {
 model('potted_plant_02', [
   { x: 2.45, z: -2.05, height: 1.15, fallback: () => plant(2.45, 0, -2.05, 1.5, C.cream) },
 ]);
-model('potted_plant_04', [
-  { x: 1.6, y: WIN.y0, z: -Z - 0.02, height: 0.26, fallback: () => plant(1.6, WIN.y0, -Z - 0.02, 0.5, C.blue) },
-  { x: -2.82, y: 1.89, z: -0.4, height: 0.24, rotY: 2, fallback: () => plant(-2.82, 1.89, -0.4, 0.45, C.cream) },
-]);
+// the two small ones, on the window sill and the top of the bookshelf, are drawn
+plant(1.6, WIN.y0, -Z - 0.02, 0.5, C.blue);
+plant(-2.82, 1.89, -0.4, 0.45, C.cream);
 addCollider(2.15, 2.75, -2.35, -1.75);
 
 // Hanging pothos in the corner by the desk: a pot on three cords from the ceiling, vines trailing over the rim.
@@ -1705,8 +1709,13 @@ addCollider(FL.x - 0.16, FL.x + 0.16, FL.z - 0.16, FL.z + 0.16);
 
 // ---------- paintings (photos, so only when served — opened as a plain file the walls stay bare) ----------
 // A canvas-weave bump makes the photos read as oil paint
-const painting = (file, w, h, x, y, z, ry, parent) => plane(w, h, mat(0xffffff, { map: tex(`art/${file}`, null, true),
-  normalMap: tex('textures/rough_linen/rough_linen_nor_gl_1k.webp', [3, 2]), normalScale: new THREE.Vector2(0.35, 0.35), roughness: 0.7 }), x, y, z, ry, parent);
+// The picture stays hidden (an empty frame) until its photo has loaded
+function painting(file, w, h, x, y, z, ry, parent) {
+  const m = mat(0xffffff, { normalMap: tex(`textures/rough_linen/rough_linen_nor_gl_${RES}.webp`, [3, 2]),
+    normalScale: new THREE.Vector2(0.35, 0.35), roughness: 0.7, visible: false });
+  m.map = tex(`art/${file}`, null, true, () => { m.visible = true; });
+  return plane(w, h, m, x, y, z, ry, parent);
+}
 // Clicking a painting (or the rug's label) walks to it and opens its description from content.js — no floating label.
 // `frame` (w × h in metres) makes the camera zoom in on it until it fills the screen beside the panel.
 const artInfo = (group, key, view, frame) => {
