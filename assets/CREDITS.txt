@@ -1,0 +1,34 @@
+Everything here is CC0 / public domain except the music, which is CC BY 3.0 (attribution required —
+the page shows the credit while the speaker plays; keep that if you change the code).
+
+Paintings (supplied by the site owner — not covered by the CC0 note above; check rights / credit the artists)
+  art/still-life-fish.webp                   still life with fish (above the bed)
+  art/mask.webp                              mask (wall between wardrobe and door)
+
+Music (CC BY 3.0, https://creativecommons.org/licenses/by/3.0/)
+  music/moonwalk-late-night-cafe.mp3        "Late Night Cafe (Lofi Hip-hop)" by Moonwalk
+                                            https://www.jamendo.com/album/525354
+                                            (copy downloaded from https://archive.org/details/jamendo-525354, unmodified)
+
+
+Kenney (https://kenney.nl, CC0)
+  sounds/*.ogg                              from the "RPG Audio" pack — see sounds/README.txt for which file is which
+
+Poly Haven (https://polyhaven.com, CC0)
+  hdri/lythwood_room_1k.hdr                 Lythwood Room
+  textures/laminate_floor_02                Laminate Floor 02
+  textures/white_oak_veneer                 White Oak Veneer
+  textures/plastered_wall_04                Plastered Wall 04
+  textures/rough_linen                      Rough Linen
+  textures/velour_velvet                    Velour Velvet
+  models/potted_plant_02                    Potted Plant 02
+  models/potted_plant_04                    Potted Plant 04
+  models/painted_wooden_chair_02            Painted Wooden Chair 02
+
+The Metropolitan Museum of Art, Open Access (CC0), via Wikimedia Commons
+  rug/silk_kashan_carpet_met.webp            Silk Kashan Carpet, Iran, 16th century (MET DT5436)
+                                            https://commons.wikimedia.org/wiki/File:Silk_Kashan_Carpet_MET_DT5436.jpg
+                                            Cropped to the carpet edge, resized, softened and saved as WebP.
+
+Note: all Poly Haven textures were converted to WebP (roughness maps greyscale 512 px, small objects 512 px),
+and the soil mesh inside potted_plant_02 was simplified. The chair's painted colour map was removed (the page uses oak).
