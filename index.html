@@ -39,7 +39,11 @@
   .chip-btn { border: 0; border-radius: 999px; padding: 9px 14px; font-size: 14px; color: var(--ink); cursor: pointer;
     background: rgba(255, 250, 245, .88); box-shadow: 0 2px 10px rgba(80, 50, 40, .1); }
   .chip-btn[aria-pressed="true"] { background: var(--ink); color: var(--cream); }
+  #quality { position: fixed; top: 16px; left: 16px; z-index: 10; border-radius: 999px; padding: 9px 14px; font-size: 14px;
+    color: var(--muted); background: rgba(255, 250, 245, .88); box-shadow: 0 2px 10px rgba(80, 50, 40, .1); border: 0; cursor: pointer; }
 
+  #stats { position: fixed; left: 8px; bottom: 8px; z-index: 30; margin: 0; padding: 8px 10px; border-radius: 8px; pointer-events: none;
+    font: 12px/1.45 ui-monospace, Consolas, monospace; color: #fff; background: rgba(30, 22, 20, .78); white-space: pre; }
   #hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 10; max-width: calc(100vw - 32px);
     padding: 9px 16px; border-radius: 999px; background: rgba(255, 250, 245, .88); font-size: 13px; text-align: center;
     box-shadow: 0 2px 10px rgba(80, 50, 40, .1); opacity: 0; transition: opacity .8s; pointer-events: none; }
@@ -95,6 +99,7 @@
   @media (max-width: 640px) {
     #panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; height: 82vh; transform: translateY(calc(100% + 16px)); }
     #hud { top: 12px; right: 12px; }
+    #quality { top: 12px; left: 12px; padding: 8px 12px; font-size: 13px; }
     .chip-btn { padding: 8px 12px; font-size: 13px; }
   }
 </style>
@@ -115,6 +120,7 @@
   <button class="chip-btn" id="mood-btn"></button>
   <button class="chip-btn" id="sound-btn" aria-pressed="true">Sound on</button>
 </div>
+<button id="quality"></button>
 <div id="hint"></div>
 
 <aside id="panel" role="dialog" aria-labelledby="panel-title" aria-hidden="true">
@@ -348,13 +354,15 @@ function disposeViewer() {
 // ---------- renderer ----------
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({ antialias: !isTouch });   // edge smoothing is hardly visible on a small, dense phone screen
 } catch (err) {
   $('#intro').classList.add('hidden');
   openSimple(false);
   throw err;
 }
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));   // sharp enough on high-DPI screens, at about half the pixels of 2×
+// Phones too: below their dense screens' resolution everything looks soft, and the extra pixels stand in for edge smoothing
+const START_DPR = Math.min(devicePixelRatio, 1.5);
+renderer.setPixelRatio(START_DPR);   // sharp enough on high-DPI screens, at about half the pixels of 2×
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;   // lighter to read than PCFSoft; sunlight has fairly crisp edges anyway
@@ -2415,10 +2423,29 @@ function addContactShadows() {
 
 // Automatic quality: for the first seconds of walking around, measure the frame rate; if the device can't keep up,
 // render at normal resolution instead of high-DPI.
-const perf = { t: 0, frames: 0, checks: 0 };
-const degrade = [
-  () => { if (renderer.getPixelRatio() <= 1) return false; renderer.setPixelRatio(1); renderer.setSize(innerWidth, innerHeight); return true; },
-];
+const perf = { t: 0, frames: 0, checks: 0, steps: 0 };
+function pixelRatio(r) {
+  if (renderer.getPixelRatio() <= r) return false;
+  renderer.setPixelRatio(r); renderer.setSize(innerWidth, innerHeight); invalidate();
+  return true;
+}
+const degrade = [() => pixelRatio(1)];   // never lower: below 1 the whole studio turns blurry
+// The label at the top left says whether the resolution was lowered
+const qualityEl = $('#quality');
+function showQuality() {
+  const name = HQ ? (perf.steps ? 'Medium' : 'High') : 'Basic';
+  qualityEl.textContent = `Quality: ${name}`;
+  qualityEl.title = !HQ ? 'Plain colours: open the page from a server to see the full textures'
+    : `Rendering at ${Math.round(renderer.getPixelRatio() * 100)}% resolution` + (perf.steps ? ' — lowered because this device ran slowly; click to go back up' : '');
+}
+showQuality();
+// Lowered and the visitor disagrees: back to the starting quality, and no more automatic changes
+qualityEl.addEventListener('click', () => {
+  if (!perf.steps) return;
+  perf.steps = 0; perf.checks = 3;
+  renderer.setPixelRatio(START_DPR); renderer.setSize(innerWidth, innerHeight); invalidate();
+  showQuality();
+});
 function checkPerf(raw, drawn) {
   const steady = drawn && perf.drew;   // only back-to-back drawn frames say how fast the device draws
   perf.drew = drawn;
@@ -2428,33 +2455,87 @@ function checkPerf(raw, drawn) {
   const fps = perf.frames / perf.t;
   perf.t = perf.frames = 0;
   perf.checks++;
-  if (fps < 45) while (degrade.length && !degrade.shift()());   // apply the next step that changes anything
+  // Below 27 fps only: laptops on battery are often held to 30 fps by the browser, which isn't the device being slow
+  if (fps < 27) {   // apply the next step that changes anything
+    while (degrade.length) if (degrade.shift()()) { perf.steps++; showQuality(); break; }
+  }
   else perf.checks = 3;   // fast enough: stop measuring
 }
 
+// Nothing is drawn while nobody can see the studio: a background tab, or — embedded in another page — scrolled
+// out of view. The loop stops completely and starts again when it comes back.
+const view = { onScreen: true, running: false };
+const visible = () => !document.hidden && view.onScreen;
+function resume() {
+  if (view.running || !visible()) return;
+  view.running = true;
+  clock.getDelta();   // don't count the paused time as one long frame
+  invalidate();
+  requestAnimationFrame(loop);
+}
+document.addEventListener('visibilitychange', resume);
+new IntersectionObserver(([e]) => { view.onScreen = e.isIntersecting; resume(); }).observe(canvas);
+
+// ---------- ?stats ----------
+// Add ?stats to the address to see what this device is doing: frame rate, the slowest frames and what was going on
+// in them, and how much is drawn. Only for finding problems; visitors never see it.
+const statsEl = new URLSearchParams(location.search).has('stats')
+  && document.body.appendChild(Object.assign(document.createElement('pre'), { id: 'stats' }));
+const st = { t: 0, frames: 0, drawn: 0, worst: 0, js: 0, hitches: 0, last: [] };
+function trackStats(raw, drawn, js, shadowRedraw) {
+  st.t += raw; st.frames++; st.js = Math.max(st.js, js);
+  if (drawn) st.drawn++;
+  // a long gap between two frames while walking or turning is a visible jerk
+  if (raw > 0.05 && drawn && state.mode === 'play') {
+    st.hitches++;
+    st.last.unshift(`${Math.round(raw * 1000)} ms${shadowRedraw ? ' (shadows redrawn)' : ''}${js > 16 ? ` (code ${Math.round(js)} ms)` : ''}`);
+    st.last.length = Math.min(st.last.length, 3);
+  }
+  st.worst = Math.max(st.worst, raw);
+  if (st.t < 1) return;
+  const i = renderer.info.render, gl = renderer.getContext();
+  const gpu = gl.getExtension('WEBGL_debug_renderer_info');
+  statsEl.textContent = [
+    `fps ${Math.round(st.frames / st.t)}  (drawn ${st.drawn})   slowest frame ${Math.round(st.worst * 1000)} ms`,
+    `code per frame up to ${st.js.toFixed(1)} ms`,
+    `jerks while moving: ${st.hitches}${st.last.length ? '   last: ' + st.last.join(', ') : ''}`,
+    `draw calls ${i.calls}   triangles ${Math.round(i.triangles / 1000)}k`,
+    `resolution ${Math.round(renderer.getPixelRatio() * 100)}%  ${gl.drawingBufferWidth}×${gl.drawingBufferHeight}`,
+    gpu ? gl.getParameter(gpu.UNMASKED_RENDERER_WEBGL).slice(0, 60) : '',
+  ].join(String.fromCharCode(10));
+  st.t = st.frames = st.drawn = st.worst = st.js = 0;
+}
+
 function loop() {
+  if (!visible()) { view.running = false; return; }
   requestAnimationFrame(loop);
   const raw = clock.getDelta(), dt = Math.min(raw, 0.05);
+  const t0 = performance.now(), shadowRedraw = shadows.dirty;
   update(dt);
   if (hoverAt) { if (state.mode === 'play' && !ptr.down && !state.tween) setHover(pick(hoverAt).it || null); hoverAt = null; }
   updateHotspots();
   const drawn = needsRender(raw);
   checkPerf(raw, drawn);
-  if (!drawn) return;
-  updateShadows();
-  renderer.render(scene, camera);
+  if (drawn) { updateShadows(); renderer.render(scene, camera); }
+  if (statsEl) trackStats(raw, drawn, performance.now() - t0, drawn && shadowRedraw);
 }
 for (const o of KEEP_APART) o.traverse(m => { m.castShadow = false; });   // movers would force shadow redraws
 addContactShadows();
 scene.updateMatrixWorld(true);
 mergeStatic(scene);
-loop();
+resume();
 
 // Light every surface for the starting mood (models loaded later set this themselves)
 applyMood();
 
 const enter = $('#enter');
-function ready() { enter.disabled = false; enter.textContent = 'Step inside'; }
+// Before the visitor steps in, every shader is built and every texture is sent to the graphics card — otherwise
+// each happens the first time a thing comes into view, and the first turns of the head stutter.
+function ready() {
+  enter.textContent = 'Almost ready…';
+  scene.traverse(o => [o.material].flat().forEach(m => m && MAP_KEYS.concat('envMap').forEach(k => m[k]?.isTexture && renderer.initTexture(m[k]))));
+  renderer.compileAsync(scene, camera).catch(() => {}).finally(() => { enter.disabled = false; enter.textContent = 'Step inside'; });
+}
 if (HQ) {
   manager.onProgress = (url, done, total) => { shadows.dirty = true; invalidate(); if (enter.disabled) enter.textContent = `Preparing the studio… ${Math.round(done / total * 100)}%`; };
   manager.onLoad = ready;
