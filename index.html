@@ -358,10 +358,13 @@ try {
   openSimple(false);
   throw err;
 }
-renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2));   // phones: a little softer, much lighter
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));   // sharp enough on high-DPI screens, at about half the pixels of 2×
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+// The room hardly moves, so the sun's shadows aren't redrawn every frame: see `shadows` in the main loop
+renderer.shadowMap.autoUpdate = false;
+renderer.shadowMap.needsUpdate = true;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = HQ ? 1.05 : 1.15;
 const canvas = renderer.domElement;
@@ -379,8 +382,8 @@ if (HQ && !isTouch) {
   composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(innerWidth * dpr, innerHeight * dpr, { type: THREE.HalfFloatType, samples: 4 }));
   composer.addPass(new RenderPass(scene, camera));
   const ao = new GTAOPass(scene, camera, innerWidth, innerHeight);
-  ao.updateGtaoMaterial({ radius: 0.4, distanceExponent: 1.5, thickness: 1.2, scale: 1, samples: 16 });
-  ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
+  ao.updateGtaoMaterial({ radius: 0.4, distanceExponent: 1.5, thickness: 1.2, scale: 1, samples: 8 });
+  ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 8 });
   ao.blendIntensity = 0.9;
   composer.addPass(ao);
   composer.addPass(new OutputPass());
@@ -725,16 +728,13 @@ function curtainGeometry(w, h) {
   geo.computeVertexNormals();
   return geo;
 }
-const curtains = [];
 for (const cx of [WIN.x0 - 0.04, WIN.x1 + 0.04]) {
   const c = new THREE.Mesh(curtainGeometry(0.58, CURTAIN_H), tulleMat);
   c.position.set(cx, ROD_Y, -Z + 0.17);
-  c.userData.rest = Float32Array.from(c.geometry.attributes.position.array);   // the still shape, for the breeze
   c.castShadow = true;
   c.customDepthMaterial = tulleShadow;
   c.userData.noPick = true;
   scene.add(c);
-  curtains.push(c);
 }
 
 // ---------- door & corridor ----------
@@ -2284,17 +2284,6 @@ function update(dt) {
   hangers.forEach((hg, i) => { hg.rotation.z = 0.05 * Math.sin(rackSway.t * 4.2 + i * 0.9) * Math.exp(-rackSway.t * 1.2); });
 
   marker.material.opacity = Math.max(0, marker.material.opacity - dt * (state.walk ? 0.3 : 2));
-  const time = clock.elapsedTime;
-  // a soft breeze: the lower fabric billows a little into the room (never back toward the window), in slow uneven waves
-  curtains.forEach((c, i) => {
-    const pos = c.geometry.attributes.position, rest = c.userData.rest;
-    for (let v = 0; v < pos.count; v++) {
-      const x = rest[v * 3], y = rest[v * 3 + 1], down = -y / CURTAIN_H;
-      const gust = 0.5 + 0.3 * Math.sin(time * 0.6 + i * 2) + 0.2 * Math.sin(time * 1.7 + x * 5 + i);
-      pos.setZ(v, rest[v * 3 + 2] + 0.04 * down * down * gust);
-    }
-    pos.needsUpdate = true;
-  });
 }
 
 function updateHotspots() {
@@ -2309,10 +2298,38 @@ function updateHotspots() {
   }
 }
 
+// Shadows are redrawn every frame only while something that casts one moves fast (the door on the way in, the
+// garments swinging); otherwise a few times a second, which keeps up with late-loading models.
+const shadows = { t: 0 };
+function updateShadows(dt) {
+  const moving = state.mode === 'intro' || Math.exp(-rackSway.t * 1.2) > 0.02;
+  if (moving || (shadows.t += dt) > 0.15) { shadows.t = 0; renderer.shadowMap.needsUpdate = true; }
+}
+
+// Automatic quality: for the first seconds of walking around, measure the frame rate; if the device can't keep up,
+// first drop the ambient occlusion (desktop), then render at normal resolution instead of high-DPI.
+const perf = { t: 0, frames: 0, checks: 0 };
+const degrade = [
+  () => { if (!composer) return false; composer.dispose(); composer = null; return true; },
+  () => { if (renderer.getPixelRatio() <= 1) return false; renderer.setPixelRatio(1); renderer.setSize(innerWidth, innerHeight); return true; },
+];
+function checkPerf(raw) {
+  if (perf.checks >= 3 || state.mode !== 'play' || document.hidden) return;
+  perf.t += raw; perf.frames++;
+  if (perf.t < 2) return;
+  const fps = perf.frames / perf.t;
+  perf.t = perf.frames = 0;
+  perf.checks++;
+  if (fps < 45) while (degrade.length && !degrade.shift()());   // apply the next step that changes anything
+  else perf.checks = 3;   // fast enough: stop measuring
+}
+
 function loop() {
   requestAnimationFrame(loop);
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const raw = clock.getDelta(), dt = Math.min(raw, 0.05);
+  checkPerf(raw);
   update(dt);
+  updateShadows(dt);
   updateHotspots();
   if (composer) composer.render(dt); else renderer.render(scene, camera);
 }
