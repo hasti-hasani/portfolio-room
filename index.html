@@ -896,7 +896,9 @@ function place(src, { x, y = 0, z, height, rotY = 0, tweak }) {
   scene.add(g);
 }
 
-model('potted_plant_02', [
+// the big one by the window: the scanned model on computers; phones get the drawn one (about 1 MB less to download)
+if (isTouch) plant(2.45, 0, -2.05, 1.5, C.cream);
+else model('potted_plant_02', [
   { x: 2.45, z: -2.05, height: 1.15, fallback: () => plant(2.45, 0, -2.05, 1.5, C.cream) },
 ]);
 // the two small ones, on the window sill and the top of the bookshelf, are drawn
@@ -2111,14 +2113,19 @@ function synthStep(soft) {
 // ---------- music: the desk speaker plays a lofi track (CC BY 3.0, credited on screen while it plays) ----------
 const MUSIC = { src: 'assets/music/moonwalk-late-night-cafe.mp3', title: '“Late Night Cafe” — Moonwalk',
   credit: '♪ “Late Night Cafe” by Moonwalk · CC BY 3.0 · via Jamendo' };
-const music = { el: null, on: false };
+// The fade runs on a Web Audio gain: iPhones ignore an audio element's volume, so it would never fade out and pause
+const music = { el: null, ctx: null, gain: null, on: false };
 function toggleMusic() {
   music.on = !music.on;
   if (!music.el) {   // loaded only the first time someone turns the speaker on
     music.el = new Audio(MUSIC.src);
     music.el.loop = true;
-    music.el.volume = 0;
+    const ctx = music.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    music.gain = ctx.createGain();
+    music.gain.gain.value = 0;
+    ctx.createMediaElementSource(music.el).connect(music.gain).connect(ctx.destination);
   }
+  music.ctx.resume();
   if (music.on) {
     music.el.play().catch(() => { music.on = false; });
     showHint(MUSIC.credit);
@@ -2212,8 +2219,8 @@ function update(dt) {
   }
 
   if (music.el) {   // fade in and out, then pause once silent
-    const v = THREE.MathUtils.clamp(music.el.volume + (music.on ? dt : -dt) * 0.6, 0, 0.55);
-    music.el.volume = v;
+    const v = THREE.MathUtils.clamp(music.gain.gain.value + (music.on ? dt : -dt) * 0.6, 0, 0.55);
+    music.gain.gain.value = v;
     if (!music.on && v === 0 && !music.el.paused) music.el.pause();
   }
   ledMat.emissiveIntensity = music.on ? 1.6 : 0;
