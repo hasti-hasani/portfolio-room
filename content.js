@@ -91,7 +91,22 @@ window.PORTFOLIO = {
     { title: "Certificate three", issuer: "Issuer", year: "2023", image: "" },
   ],
 
-  // The wardrobe — CLO3D garments. "color" tints the dress hanging inside.
+  // The pin board beside the bookshelf: HCI on the left, machine learning on the right.
+  // Decoration only (not clickable): the first three titles of each list are written on its notes.
+  board: {
+    hci: [
+      { title: "User interviews", year: "2026", summary: "What you studied, who took part, what you learned.", tags: ["Research"], link: "" },
+      { title: "Prototype testing", year: "2026", summary: "", tags: ["Usability"], link: "" },
+      { title: "Design principles", year: "2025", summary: "", tags: [], link: "" },
+    ],
+    ml: [
+      { title: "Style recommender", year: "2026", summary: "The model, the data, and how people used it.", tags: ["Recommender"], link: "" },
+      { title: "Dataset notes", year: "2026", summary: "", tags: ["Data"], link: "" },
+      { title: "Model experiments", year: "2025", summary: "", tags: [], link: "" },
+    ],
+  },
+
+  // The clothing rack — CLO3D garments. "color" tints the dress on each hanger.
   garments: [
     { title: "Garment one", year: "2026", summary: "Fabric, technique, idea.", model: "", image: "", color: "#e8b9b5" },
     { title: "Garment two", year: "2025", summary: "", model: "", image: "", color: "#b7cbb0" },
@@ -111,6 +126,12 @@ window.PORTFOLIO = {
       meta: "1936–1966 · Tabriz, Iran",
       image: "assets/art/mask.webp",
       text: "Iranian modernist painter and one of the pioneers of the Saqqakhaneh movement, which joined traditional Iranian art and cultural symbols with modern styles. His paintings bring together abstract geometric forms, mythical figures and motifs from Persian art and folklore.",
+    },
+    sadeghi: {
+      title: "Ali Akbar Sadeghi",
+      meta: "Painter and illustrator · b. 1937, Tehran, Iran",
+      image: "assets/art/sadeghi.webp",
+      text: "Known for surreal, densely detailed illustrations rooted in Persian miniatures, coffeehouse painting and literature, at times reworking Western works such as Munch's The Scream. One of Iran's most prolific artists, he won many awards for his illustration and animation and was named one of “Iran's Enduring Faces” in 1999.",
     },
     rug: {
       title: "Silk Kashan Carpet",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>My Room</title>
+<title>My Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -115,7 +115,6 @@
 <div id="hud">
   <button class="chip-btn" id="mood-btn"></button>
   <button class="chip-btn" id="sound-btn" aria-pressed="true">Sound on</button>
-  <button class="chip-btn" id="simple-btn">Simple view</button>
 </div>
 <div id="hint"></div>
 
@@ -130,10 +129,9 @@
 <div class="overlay" id="intro">
   <div class="intro-card">
     <div class="eyebrow">Portfolio</div>
-    <h1 id="intro-title">Welcome in</h1>
+    <h1 id="intro-title">Welcome to my studio</h1>
     <p id="intro-tagline"></p>
-    <button class="btn" id="enter" disabled>Preparing the room…</button>
-    <button class="link" id="intro-simple">Prefer a simple page?</button>
+    <button class="btn" id="enter" disabled>Preparing the studio…</button>
   </div>
 </div>
 
@@ -173,16 +171,14 @@ const C = {
 };
 const X = 3, Z = 2.5, H = 2.8, T = 0.2;            // half-width, half-depth, height, wall thickness
 const EYE = 1.55, RADIUS = 0.28, SPEED = 1.7;
-const WIN = { x0: 0.3, x1: 1.7, y0: 0.9, y1: 2.2 };   // window in the north wall
+const WIN = { x0: 0.0, x1: 1.95, y0: 0.45, y1: 2.5 };   // a tall studio window in the north wall
 const DOOR = { x0: 0.35, x1: 1.25, h: 2.1 };          // door in the south wall
 const START = { x: 0.8, z: 1.6, yaw: 0.15 };
 
 const state = { mode: 'waiting', introT: 0, tween: null, walk: null, panel: null, hover: null, simple: false };
-const wardrobeState = { open: 0, target: 0 };
 
 // ---------- intro text ----------
-document.title = P.owner && P.owner !== 'Your Name' ? `${P.owner} — Room` : 'My Room';
-$('#intro-title').textContent = P.owner ? `Welcome to ${P.owner}'s room` : 'Welcome in';
+document.title = P.owner && P.owner !== 'Your Name' ? `${P.owner} — Studio` : 'My Studio';
 $('#intro-tagline').textContent = P.tagline || '';
 
 // ---------- DOM helpers & content ----------
@@ -217,7 +213,7 @@ const PANELS = {
   articles: { title: 'Articles', render: el => (P.articles || []).forEach(a => el.append(card(a, { image: false, linkText: 'Read' }))) },
   certificates: { title: 'Certificates', render: el => el.append(h('div', { class: 'grid' }, (P.certificates || []).map(c => card(c)))) },
   garments: {
-    title: 'CLO3D Wardrobe',
+    title: 'CLO3D Garments',
     render: el => (P.garments || []).forEach(g => {
       const c = card(g);
       c.querySelector('.actions').append(h('button', { class: 'small-btn', onclick: () => openViewer(g, c.querySelector('.thumb')) }, 'View in 3D'));
@@ -233,7 +229,7 @@ const PANELS = {
       h('p', { class: 'art-text' }, a.text || '')),
   }])),
   exit: {
-    title: 'Leave the room?',
+    title: 'Leave the studio?',
     render: el => el.append(
       h('p', { style: 'line-height:1.6; margin-top:0' }, 'The door leads back to my main site. Thanks for visiting!'),
       h('div', { class: 'actions' },
@@ -259,7 +255,6 @@ function openPanel(key) {
 function closePanel() {
   disposeViewer();
   state.panel = null;
-  wardrobeState.target = 0;
   closeUp.tk = 1; closeUp.tox = 0;
   panel.classList.remove('open');
   panel.setAttribute('aria-hidden', 'true');
@@ -278,7 +273,7 @@ function openSimple(canReturn = true) {
   inner.replaceChildren(
     h('div', { class: 'simple-top' },
       h('div', {}, h('h1', {}, P.owner || 'Portfolio'), P.tagline ? h('p', {}, P.tagline) : null),
-      canReturn ? h('button', { class: 'btn ghost', onclick: closeSimple }, 'Back to the room') : null),
+      canReturn ? h('button', { class: 'btn ghost', onclick: closeSimple }, 'Back to the studio') : null),
     ...sections);
   $('#simple').classList.remove('hidden');
   $('#simple').scrollTop = 0;
@@ -288,8 +283,6 @@ function closeSimple() {
   state.simple = false;
   $('#simple').classList.add('hidden');
 }
-$('#simple-btn').addEventListener('click', () => { closePanel(); openSimple(); });
-$('#intro-simple').addEventListener('click', () => openSimple());
 
 // ---------- 3D garment viewer ----------
 let viewer = null;
@@ -424,7 +417,7 @@ const PLASTER = HQ ? pbr('plastered_wall_04', [2, 1], 'nr', 0.5) : {};
 // Palette colours that become real wood when the photo textures are available
 const SURFACE = new Map(HQ ? [[C.woodLight, { color: 0xfff4e8, ...OAK }], [C.wood, { color: 0xe2bf9c, ...OAK }]] : []);
 
-if (HQ) new RGBELoader(manager).load('assets/hdri/lythwood_room_1k.hdr', t => {
+if (HQ) new RGBELoader(manager).load('assets/hdri/lythwood_room_512.hdr', t => {
   t.mapping = THREE.EquirectangularReflectionMapping;
   scene.environment = t;
 });
@@ -667,21 +660,31 @@ nightSky.receiveShadow = false;
 nightSky.renderOrder = -1;
 
 const wz0 = -Z - T / 2 - 0.03, wz1 = -Z - T / 2 + 0.03;
-part(scene, C.trim, WIN.x0, WIN.x0 + 0.05, WIN.y0, WIN.y1, wz0, wz1);
-part(scene, C.trim, WIN.x1 - 0.05, WIN.x1, WIN.y0, WIN.y1, wz0, wz1);
-part(scene, C.trim, WIN.x0, WIN.x1, WIN.y1 - 0.05, WIN.y1, wz0, wz1);
-part(scene, C.trim, WIN.x0, WIN.x1, WIN.y0, WIN.y0 + 0.05, wz0, wz1);
-part(scene, C.trim, 0.975, 1.025, WIN.y0, WIN.y1, wz0, wz1);
-part(scene, C.trim, WIN.x0, WIN.x1, 1.53, 1.57, wz0, wz1);
+// a slim white steel frame with a grid of panes, like an old workshop window: 3 across, 4 high
+const steel = mat(C.trim, { roughness: 0.4 });   // painted white, like the trim
+const PANES = { cols: 3, rows: 4 }, BAR = 0.022, EDGE = 0.045;
+part(scene, steel, WIN.x0, WIN.x0 + EDGE, WIN.y0, WIN.y1, wz0, wz1, 0.004);
+part(scene, steel, WIN.x1 - EDGE, WIN.x1, WIN.y0, WIN.y1, wz0, wz1, 0.004);
+part(scene, steel, WIN.x0, WIN.x1, WIN.y1 - EDGE, WIN.y1, wz0, wz1, 0.004);
+part(scene, steel, WIN.x0, WIN.x1, WIN.y0, WIN.y0 + EDGE, wz0, wz1, 0.004);
+for (let i = 1; i < PANES.cols; i++) {
+  const x = WIN.x0 + (WIN.x1 - WIN.x0) * i / PANES.cols;
+  part(scene, steel, x - BAR / 2, x + BAR / 2, WIN.y0, WIN.y1, wz0 + 0.01, wz1 - 0.01, 0.003);
+}
+for (let i = 1; i < PANES.rows; i++) {
+  const y = WIN.y0 + (WIN.y1 - WIN.y0) * i / PANES.rows;
+  part(scene, steel, WIN.x0, WIN.x1, y - BAR / 2, y + BAR / 2, wz0 + 0.01, wz1 - 0.01, 0.003);
+}
 part(scene, C.trim, WIN.x0 - 0.06, WIN.x1 + 0.06, WIN.y0 - 0.04, WIN.y0, -Z - 0.12, -Z + 0.12);   // sill
 const glass = plane(WIN.x1 - WIN.x0, WIN.y1 - WIN.y0,
-  new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1, depthWrite: false }), 1, (WIN.y0 + WIN.y1) / 2, -Z - T / 2);
+  new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1, depthWrite: false }), (WIN.x0 + WIN.x1) / 2, (WIN.y0 + WIN.y1) / 2, -Z - T / 2);
 glass.userData.noPick = true;
 
 // tulle curtains
-const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 2.1, 12), brass());
+const ROD_Y = 2.64, CURTAIN_H = ROD_Y - 0.015;   // the curtains fall all the way to the floor
+const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, WIN.x1 - WIN.x0 + 0.6, 12), brass());
 rod.rotation.z = Math.PI / 2;
-rod.position.set(1, 2.42, -Z + 0.16);   // far enough out that the curtains clear the window sill
+rod.position.set((WIN.x0 + WIN.x1) / 2, ROD_Y, -Z + 0.16);   // far enough out that the curtains clear the window sill
 scene.add(rod);
 // Sheer tulle: a fine diagonal net with uneven slub threads
 const tulleTex = canvasTex(128, 128, (g, w, h) => {
@@ -719,9 +722,9 @@ function curtainGeometry(w, h) {
   return geo;
 }
 const curtains = [];
-for (const cx of [0.22, 1.78]) {
-  const c = new THREE.Mesh(curtainGeometry(0.5, 1.95), tulleMat);
-  c.position.set(cx, 2.42, -Z + 0.17);
+for (const cx of [WIN.x0 - 0.04, WIN.x1 + 0.04]) {
+  const c = new THREE.Mesh(curtainGeometry(0.58, CURTAIN_H), tulleMat);
+  c.position.set(cx, ROD_Y, -Z + 0.17);
   c.userData.rest = Float32Array.from(c.geometry.attributes.position.array);   // the still shape, for the breeze
   c.castShadow = true;
   c.customDepthMaterial = tulleShadow;
@@ -804,7 +807,7 @@ const rugTex = canvasTex(1024, 700, (g, w, h) => {
   // pendants above and below the medallion
   for (const dy of [-1, 1]) { star(cx, cy + dy * 200, 30, 20, 8, navy); rosette(cx, cy + dy * 200, 16, cream, gold); }
 });
-const RUG = { x: -0.25, z: 0.2, w: 2.5, d: 1.7 };
+const RUG = { x: 1.25, z: 0.2, w: 2.8, d: 2.0 };   // the edge near the couch runs just under its front legs
 // A 16th-century silk Kashan carpet photographed by The Met (public domain), with a woven-pile bump on top
 const rugMat = HQ
   ? mat(0xfff6ee, { map: tex('rug/silk_kashan_carpet_met.webp', null, true), normalMap: tex('textures/rough_linen/rough_linen_nor_gl_1k.webp', [5, 3.5]), roughness: 1 })
@@ -892,8 +895,8 @@ model('potted_plant_02', [
   { x: 2.45, z: -2.05, height: 1.15, fallback: () => plant(2.45, 0, -2.05, 1.5, C.cream) },
 ]);
 model('potted_plant_04', [
-  { x: 1.45, y: WIN.y0, z: -Z - 0.02, height: 0.26, fallback: () => plant(1.45, WIN.y0, -Z - 0.02, 0.5, C.blue) },
-  { x: -2.82, y: 1.89, z: -0.75, height: 0.24, rotY: 2, fallback: () => plant(-2.82, 1.89, -0.75, 0.45, C.cream) },
+  { x: 1.6, y: WIN.y0, z: -Z - 0.02, height: 0.26, fallback: () => plant(1.6, WIN.y0, -Z - 0.02, 0.5, C.blue) },
+  { x: -2.82, y: 1.89, z: -0.4, height: 0.24, rotY: 2, fallback: () => plant(-2.82, 1.89, -0.4, 0.45, C.cream) },
 ]);
 addCollider(2.15, 2.75, -2.35, -1.75);
 
@@ -995,13 +998,86 @@ part(scene, C.woodLight, -2.2, -0.8, 0.72, 0.76, -2.48, -1.82, 0.01);
 for (const [lx, lz] of [[-2.15, -2.43], [-0.85, -2.43], [-2.15, -1.87], [-0.85, -1.87]]) part(scene, C.wood, lx - 0.02, lx + 0.02, 0, 0.72, lz - 0.02, lz + 0.02, 0.008);
 addCollider(-2.2, -0.8, -2.5, -1.8);
 
-// the scanned chair keeps its wear (normal + roughness maps) but takes the desk's oak instead of its paint
-model('painted_wooden_chair_02', [{ x: -1.5, z: -1.55, height: 1.0, rotY: Math.PI, tweak: m => { m.map = OAK.map; m.color.set(0xfff4e8); }, fallback: () => {
-  part(scene, C.sage, -1.73, -1.27, 0.44, 0.49, -1.77, -1.33, 0.02);
-  part(scene, C.sage, -1.73, -1.27, 0.49, 0.95, -1.37, -1.32, 0.02);
-  for (const [lx, lz] of [[-1.7, -1.74], [-1.3, -1.74], [-1.7, -1.36], [-1.3, -1.36]]) part(scene, C.wood, lx - 0.015, lx + 0.015, 0, 0.44, lz - 0.015, lz + 0.015, 0.006);
-} }]);
-addCollider(-1.75, -1.25, -1.8, -1.3);
+// An ergonomic desk chair: a curved mesh back with lumbar support and a headrest, padded seat, armrests,
+// a gas lift and a five-star base on castors. It faces the desk (−z), turned a touch toward the room.
+const deskChair = new THREE.Group();
+deskChair.position.set(-1.5, 0, -1.5);
+deskChair.rotation.y = 0.12;
+scene.add(deskChair);
+{
+  const frameMat = mat(C.white, { roughness: 0.35 }), alu = mat(0xd8d6d4, { metalness: HQ ? 0.9 : 0.5, roughness: 0.25 });
+  const darkMat = mat(0x4a4450, { roughness: 0.5 }), padMat = mat(0xecbcb8, { ...LINEN });
+  const meshTex = canvasTex(64, 64, (g, w, h) => {   // a fine woven mesh
+    g.fillStyle = '#ecbcb8'; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(150, 80, 80, .3)';
+    for (let i = 0; i < w; i += 4) { g.fillRect(i, 0, 1.5, h); g.fillRect(0, i, w, 1.5); }
+  }, [10, 12]);
+  const meshMat = mat(0xffffff, { map: meshTex, roughness: 0.8, side: THREE.DoubleSide });
+  // base: five spokes with castors, then the gas lift
+  for (let k = 0; k < 5; k++) {
+    const a = k * Math.PI * 2 / 5, ex = Math.cos(a) * 0.3, ez = Math.sin(a) * 0.3;
+    rod3([0, 0.1, 0], [ex, 0.075, ez], 0.018, alu, deskChair);
+    const castor = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.024, 16), darkMat);
+    castor.rotation.set(Math.PI / 2, -a, 0, 'YXZ');   // axle across the spoke
+    castor.position.set(ex, 0.03, ez);
+    castor.castShadow = true;
+    deskChair.add(castor);
+    rod3([ex, 0.075, ez], [ex, 0.045, ez], 0.008, darkMat, deskChair);
+  }
+  rod3([0, 0.08, 0], [0, 0.2, 0], 0.035, darkMat, deskChair);
+  rod3([0, 0.2, 0], [0, 0.42, 0], 0.016, alu, deskChair);
+  part(deskChair, darkMat, -0.12, 0.12, 0.41, 0.44, -0.12, 0.12, 0.01);   // tilt mechanism
+  // seat: a padded cushion, softly rounded
+  part(deskChair, frameMat, -0.25, 0.25, 0.44, 0.465, -0.24, 0.24, 0.012);
+  part(deskChair, padMat, -0.245, 0.245, 0.46, 0.52, -0.235, 0.235, 0.03);
+  // back: a panel curved round the sitter, bulging forward at the small of the back, leaning back a little
+  const BW = 0.46, BH = 0.55, B0 = 0.6;   // width, height, bottom edge height — low enough not to hide the screen
+  const backPoint = (u, v) => {   // u, v in −1…1 → point on the back
+    const y = B0 + (v + 1) / 2 * BH;
+    const z = 0.25 + 0.06 * u * u - 0.035 * Math.exp(-(((v + 0.45) / 0.35) ** 2)) + (y - B0) * 0.14;
+    return new THREE.Vector3(u * BW / 2, y, z);
+  };
+  const panel = (fn, segs, material) => {
+    const geo = new THREE.PlaneGeometry(2, 2, segs, segs), pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) pos.setXYZ(i, ...fn(pos.getX(i), pos.getY(i)).toArray());
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, material);
+    m.castShadow = m.receiveShadow = true;
+    deskChair.add(m);
+  };
+  const edge = (fn, r) => {   // a frame tube round a panel's border
+    const pts = [];
+    for (let i = 0; i < 64; i++) {
+      const t = i / 64 * 4, s = t % 1 * 2 - 1;
+      pts.push(fn(...[[s, -1], [1, s], [-s, 1], [-1, -s]][Math.floor(t)]));
+    }
+    const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 128, r, 8, true), frameMat);
+    m.castShadow = true;
+    deskChair.add(m);
+  };
+  panel(backPoint, 20, meshMat);
+  edge(backPoint, 0.013);
+  // lumbar pad across the lower back
+  panel((u, v) => backPoint(u * 0.8, -0.45 + v * 0.12).add(new THREE.Vector3(0, 0, -0.012)), 12, frameMat);
+  // headrest above the back
+  const headPoint = (u, v) => {
+    const y = B0 + BH + 0.08 + (v + 1) / 2 * 0.13;
+    return new THREE.Vector3(u * 0.13, y, 0.25 + 0.03 * u * u + (y - B0) * 0.14);
+  };
+  panel(headPoint, 10, padMat);
+  edge(headPoint, 0.01);
+  rod3([0, B0 + BH - 0.02, 0.25 + BH * 0.14 + 0.012], [0, B0 + BH + 0.09, 0.25 + (BH + 0.09) * 0.14 + 0.012], 0.012, frameMat, deskChair);
+  // the spine joining seat and back
+  rod3([0, 0.44, 0.1], [0, 0.45, 0.27], 0.02, frameMat, deskChair);
+  rod3([0, 0.45, 0.27], [0, B0 + 0.12, 0.27 + 0.018], 0.02, frameMat, deskChair);
+  // armrests: a post from under the seat, a soft pad on top
+  for (const sx of [-1, 1]) {
+    rod3([sx * 0.2, 0.44, 0.05], [sx * 0.25, 0.47, 0.05], 0.014, frameMat, deskChair);
+    rod3([sx * 0.25, 0.47, 0.05], [sx * 0.25, 0.67, 0.03], 0.014, frameMat, deskChair);
+    part(deskChair, darkMat, sx * 0.25 - 0.04, sx * 0.25 + 0.04, 0.665, 0.69, -0.12, 0.12, 0.012);
+  }
+}
+addCollider(-1.8, -1.2, -1.8, -1.2);
 
 const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.025, 24), mat(C.cream));
 lampBase.position.set(-2.0, 0.772, -2.28);
@@ -1140,6 +1216,7 @@ makeInteractive(certs, 'certificates', 'Certificates', [-1.5, 2.13, -2.45], [-1.
 
 // Bookshelf → articles
 const shelf = new THREE.Group();
+shelf.position.z = 0.35;   // built at z −1.0…0.2, moved over to leave room for the pin board
 scene.add(shelf);
 part(shelf, C.woodLight, -2.98, -2.64, 0, 1.9, -1.0, -0.97);
 part(shelf, C.woodLight, -2.98, -2.64, 0, 1.9, 0.17, 0.2);
@@ -1264,10 +1341,10 @@ for (const b of books) {
   m.castShadow = m.receiveShadow = true;
   shelf.add(m);
 }
-addCollider(-3, -2.6, -1.0, 0.2);
-makeInteractive(shelf, 'articles', 'Articles', [-2.8, 2.1, -0.4], [-1.3, -0.4, -2.82, 1.0, -0.4]);
+addCollider(-3, -2.6, -0.65, 0.55);
+makeInteractive(shelf, 'articles', 'Articles', [-2.8, 2.1, -0.05], [-1.3, -0.05, -2.82, 1.0, -0.05]);
 
-// Wardrobe → CLO3D garments
+// Clothing rack → CLO3D garments
 function dressGeometry(height = 1.1) {
   const pts = [[0.3, 0], [0.26, 0.18], [0.2, 0.42], [0.13, 0.58], [0.115, 0.64], [0.14, 0.74], [0.15, 0.84], [0.12, 0.92], [0.07, 0.97], [0.0, 0.98]]
     .map(([r, y]) => new THREE.Vector2(r * height, y * height));
@@ -1281,47 +1358,198 @@ function dressGeometry(height = 1.1) {
   geo.computeVertexNormals();
   return geo;
 }
-const wardrobe = new THREE.Group();
-scene.add(wardrobe);
-const WZ0 = 0.55, WZ1 = 1.85, WX = -2.42;
-// all oak like the desk and chair: darker raised panels and turned wooden knobs on the doors
-part(wardrobe, C.woodLight, -3.0, -2.97, 0.06, 2.1, WZ0, WZ1, 0);
-part(wardrobe, C.woodLight, -3.0, WX, 0.06, 2.1, WZ0, WZ0 + 0.03);
-part(wardrobe, C.woodLight, -3.0, WX, 0.06, 2.1, WZ1 - 0.03, WZ1);
-part(wardrobe, C.woodLight, -3.0, WX, 2.07, 2.1, WZ0, WZ1);
-part(wardrobe, C.woodLight, -3.0, WX, 0.06, 0.1, WZ0, WZ1);
-part(wardrobe, C.woodLight, -3.0, WX + 0.02, 2.1, 2.15, WZ0 - 0.02, WZ1 + 0.02, 0.01);
-for (const fz of [WZ0 + 0.06, WZ1 - 0.06]) part(wardrobe, C.wood, WX - 0.08, WX - 0.04, 0, 0.06, fz - 0.02, fz + 0.02, 0.006);
-const railMat = brass();
-const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, WZ1 - WZ0 - 0.06, 8), railMat);
-rail.rotation.x = Math.PI / 2;
-rail.position.set(-2.71, 1.9, (WZ0 + WZ1) / 2);
-wardrobe.add(rail);
-const hangerColors = [0, 1, 2].map(i => P.garments?.[i]?.color || ['#e8b9b5', '#b7cbb0', '#c2d6e2'][i]);
-hangerColors.forEach((col, i) => {
-  const d = new THREE.Mesh(dressGeometry(1.0), mat(new THREE.Color(col), { side: THREE.DoubleSide }));
-  d.scale.set(0.55, 1, 0.75);
-  d.position.set(-2.71, 0.86, WZ0 + 0.27 + i * 0.38);
-  d.castShadow = true;
-  wardrobe.add(d);
-});
-const wDoors = [];
-const knobMat = mat(C.wood, { roughness: 0.6 });
-for (const [hz, dir] of [[WZ0, 1], [WZ1, -1]]) {
-  const pivot = new THREE.Group();
-  pivot.position.set(WX + 0.015, 0, hz);
-  pivot.userData.dir = dir;
-  wardrobe.add(pivot);
-  const w = (WZ1 - WZ0) / 2 - 0.004;
-  part(pivot, C.woodLight, -0.015, 0.015, 0.08, 2.08, dir > 0 ? 0 : -w, dir > 0 ? w : 0, 0.008);
-  part(pivot, C.wood, 0.012, 0.02, 0.3, 1.85, dir > 0 ? 0.08 : -w + 0.08, dir > 0 ? w - 0.08 : -0.08, 0.003);
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.022, 14, 10), knobMat);
-  knob.position.set(0.035, 1.05, dir * (w - 0.06));
-  pivot.add(knob);
-  wDoors.push(pivot);
+// A round rod or leg from point a to point b
+function rod3(a, b, r, material, parent) {
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), dir = B.clone().sub(A);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, dir.length(), 10), material);
+  m.position.copy(A).add(B).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
 }
-addCollider(-3, -2.38, WZ0, WZ1);
-makeInteractive(wardrobe, 'garments', 'CLO3D Wardrobe', [-2.7, 2.35, 1.2], [-0.95, 1.2, -2.7, 1.15, 1.2]);
+// An open clothing rack along the west wall: oak feet and shelf, a brass frame, the garments on wooden hangers
+const rack = new THREE.Group();
+scene.add(rack);
+const RZ0 = 0.9, RZ1 = 2.2, RX = -2.62, RAIL_Y = 1.7;
+const rackBrass = brass(), hangerWood = mat(C.wood, { roughness: 0.6 });
+for (const z of [RZ0 + 0.03, RZ1 - 0.03]) {
+  part(rack, C.woodLight, RX - 0.22, RX + 0.22, 0, 0.04, z - 0.025, z + 0.025, 0.01);
+  rod3([RX, 0.04, z], [RX, RAIL_Y, z], 0.012, rackBrass, rack);
+}
+rod3([RX, RAIL_Y, RZ0 + 0.01], [RX, RAIL_Y, RZ1 - 0.01], 0.011, rackBrass, rack);
+part(rack, C.woodLight, RX - 0.19, RX + 0.19, 0.18, 0.21, RZ0 + 0.06, RZ1 - 0.06, 0.008);
+// folded fabric on the shelf
+[[1.13, C.blue], [1.13, C.cream], [1.47, C.sage], [1.85, C.blush], [1.85, C.pink], [1.85, C.cream]].reduce((y, [z, col], i, a) => {
+  const y0 = i && a[i - 1][0] === z ? y : 0.21;
+  part(rack, mat(col, LINEN), RX - 0.15, RX + 0.15, y0, y0 + 0.045, z - 0.13, z + 0.13, 0.015);
+  return y0 + 0.045;
+}, 0.21);
+// A garment hanging from its shoulders: a soft, flattened tube, pinched to a seam where the hanger holds it,
+// with sloping shoulders, folds that deepen toward the hem and a slightly uneven hem. `widths` is [t, half-width] down its length.
+function hangingGarment(len, widths, depth, ph) {
+  const geo = new THREE.CylinderGeometry(1, 1, len, 40, 30, true);
+  geo.translate(0, -len / 2, 0);   // top edge at y = 0
+  const width = t => {
+    for (let i = 1; i < widths.length; i++) if (t <= widths[i][0]) {
+      const [t0, w0] = widths[i - 1], [t1, w1] = widths[i];
+      return w0 + (w1 - w0) * (t - t0) / (t1 - t0);
+    }
+    return widths.at(-1)[1];
+  };
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const t = -pos.getY(i) / len, a = Math.atan2(pos.getZ(i), pos.getX(i));
+    const w = width(t), d = depth * Math.min(1, 0.3 + t * 5);
+    const x = Math.cos(a) * w;
+    let z = Math.sin(a) * d;
+    z += Math.sign(z) * 0.012 * t ** 1.3 * (1 + Math.sin(x * 38 + ph));   // folds, always bulging outward
+    const y = -t * len - 0.035 * (x / w) ** 2 * Math.max(0, 1 - t * 4) + 0.008 * t * t * Math.sin(a * 6 + ph);
+    pos.setXYZ(i, x * (1 + 0.04 * t * Math.sin(a * 3 + ph)), y, z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+const DRESS = [[0, 0.17], [0.15, 0.17], [0.38, 0.14], [1, 0.25]];
+const SHIRT = [[0, 0.19], [0.2, 0.19], [1, 0.18]];
+const COAT = [[0, 0.2], [0.2, 0.21], [1, 0.23]];
+const gColor = i => P.garments?.[i]?.color || ['#e8b9b5', '#b7cbb0', '#c2d6e2'][i];
+// side by side as on a real rail, each turned a touch differently; the first three take their colours from content.js
+const GARMENTS = [
+  { len: 1.0, w: DRESS, d: 0.05, col: gColor(0) },
+  { len: 0.68, w: SHIRT, d: 0.045, sleeve: 0.56, col: '#f6efe4' },
+  { len: 0.82, w: COAT, d: 0.07, sleeve: 0.6, col: '#cdb79e' },
+  { len: 0.9, w: DRESS, d: 0.045, col: gColor(1) },
+  { len: 0.64, w: SHIRT, d: 0.04, sleeve: 0.22, col: '#ffffff' },
+  { len: 1.05, w: COAT, d: 0.075, sleeve: 0.64, col: '#8692ad' },
+  { len: 0.7, w: SHIRT, d: 0.045, sleeve: 0.55, col: gColor(2) },
+];
+const hangers = [];
+GARMENTS.forEach((g, i) => {
+  const hg = new THREE.Group();   // pivots on the rail, so it can swing
+  hg.position.set(RX + (rnd() - 0.5) * 0.03, RAIL_Y, RZ0 + 0.13 + i * (RZ1 - RZ0 - 0.26) / (GARMENTS.length - 1));
+  hg.rotation.y = (rnd() - 0.5) * 0.14;
+  rack.add(hg);
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.003, 6, 20, Math.PI + 0.5), rackBrass);
+  hook.rotation.z = -0.5;
+  rod3([-0.02, -0.09, 0], [-0.02, 0, 0], 0.003, rackBrass, hg);
+  hg.add(hook);
+  for (const s of [-1, 1]) rod3([0, -0.09, 0], [s * 0.12, -0.13, 0], 0.007, hangerWood, hg);
+  const cloth = mat(new THREE.Color(g.col), { ...LINEN, side: THREE.DoubleSide });
+  const body = new THREE.Mesh(hangingGarment(g.len, g.w, g.d, rnd() * 6), cloth);
+  body.position.y = -0.085;
+  hg.add(body);
+  if (g.sleeve) for (const s of [-1, 1]) {   // sleeves hang loose down the sides
+    const sl = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.036, g.sleeve, 14, 1, true), cloth);
+    sl.position.set(s * (g.w[0][1] - 0.012), -0.12 - g.sleeve / 2, 0);
+    sl.rotation.z = s * 0.05;
+    sl.scale.z = 0.8;
+    hg.add(sl);
+  }
+  hg.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+  hangers.push(hg);
+});
+const rackSway = { t: 99 };   // seconds since the garments were last touched
+addCollider(-3, -2.36, RZ0 - 0.05, RZ1 + 0.05);
+makeInteractive(rack, 'garments', 'CLO3D Garments', [RX, 2.0, 1.55], [-0.95, 1.55, RX, 1.15, 1.55]);
+
+// Whiteboard on the west wall, between the bookshelf and the hanging plant: sticky notes (HCI on the left, ML on the right)
+// and marker sketches drawn straight on the board, with a tray of markers and an eraser. Decorative only; the note titles come from content.js.
+const board = new THREE.Group();
+scene.add(board);
+const BD = { z0: -1.78, z1: -0.72, y0: 0.95, y1: 1.75 }, BPX = 1000;   // board size, and canvas pixels per metre
+const alu = mat(0xd9dadc, { metalness: HQ ? 0.85 : 0.4, roughness: 0.3 });
+for (const [y0, y1, z0, z1] of [[BD.y1, BD.y1 + 0.025, BD.z0 - 0.025, BD.z1 + 0.025], [BD.y0 - 0.025, BD.y0, BD.z0 - 0.025, BD.z1 + 0.025],
+  [BD.y0, BD.y1, BD.z0 - 0.025, BD.z0], [BD.y0, BD.y1, BD.z1, BD.z1 + 0.025]]) part(board, alu, -X, -X + 0.03, y0, y1, z0, z1, 0.005);
+part(board, alu, -X, -X + 0.075, BD.y0 - 0.045, BD.y0 - 0.025, BD.z0 + 0.1, BD.z1 - 0.1, 0.004);   // marker tray
+part(board, alu, -X + 0.068, -X + 0.075, BD.y0 - 0.045, BD.y0 - 0.01, BD.z0 + 0.1, BD.z1 - 0.1, 0.002);   // its lip
+// markers lying in the tray, and an eraser
+[['#3f4d72', -1.45], ['#c8362d', -1.3], ['#4f9ea0', -1.16]].forEach(([col, z]) => {
+  rod3([-X + 0.045, BD.y0 - 0.016, z], [-X + 0.045, BD.y0 - 0.016, z + 0.12], 0.009, mat(C.white, { roughness: 0.4 }), board);
+  rod3([-X + 0.045, BD.y0 - 0.016, z + 0.12], [-X + 0.045, BD.y0 - 0.016, z + 0.14], 0.0095, mat(new THREE.Color(col), { roughness: 0.4 }), board);
+});
+part(board, mat(0x3b3540, { roughness: 0.8 }), -X + 0.022, -X + 0.066, BD.y0 - 0.025, BD.y0 + 0.005, -1.0, -0.88, 0.006);   // eraser: felt below,
+part(board, mat(C.blush, { roughness: 0.5 }), -X + 0.024, -X + 0.064, BD.y0 + 0.005, BD.y0 + 0.02, -0.995, -0.885, 0.006);   // a handle on top
+// note slots on the canvas: [x, y, tilt]
+const HCI_NOTES = [[50, 45, -0.04], [255, 70, 0.03], [55, 270, 0.02]];
+const ML_NOTES = [[630, 45, 0.03], [840, 65, -0.04], [845, 290, -0.03]];
+const NOTE = 170;
+function wrapText(g, text, x, y, maxW, lh, maxLines) {
+  const words = text.split(' ');
+  let line = '', n = 0;
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (g.measureText(test).width > maxW && line) {
+      g.fillText(line, x, y + n * lh);
+      if (++n >= maxLines) return;
+      line = w;
+    } else line = test;
+  }
+  if (line) g.fillText(line, x, y + n * lh);
+}
+const boardTex = canvasTex(1060, 800, (g, w, hh) => {
+  const r = (seed => () => (seed = seed * 16807 % 2147483647) / 2147483647)(7);
+  g.fillStyle = '#fbfbfa'; g.fillRect(0, 0, w, hh);
+  for (let i = 0; i < 7; i++) {   // faint grey ghosts of older, wiped-off sketches
+    g.fillStyle = 'rgba(120, 125, 140, .05)';
+    g.beginPath(); g.ellipse(r() * w, r() * hh, 60 + r() * 120, 20 + r() * 40, r() * 3, 0, Math.PI * 2); g.fill();
+  }
+  const ink = '#3b3540', navy = '#3f4d72', red = '#c8362d', teal = '#3f8f8c';
+  // marker strokes: round ends, a slight wobble like a hand-drawn line
+  const pen = (col, lw = 4) => { g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lw; g.lineCap = g.lineJoin = 'round'; };
+  const scrawl = pts => {
+    g.beginPath();
+    pts.forEach(([x, y], i) => { const jx = x + (r() - 0.5) * 2.5, jy = y + (r() - 0.5) * 2.5; i ? g.lineTo(jx, jy) : g.moveTo(jx, jy); });
+    g.stroke();
+  };
+  const line = (x0, y0, x1, y1, steps = 8) => scrawl(Array.from({ length: steps + 1 }, (_, i) => [x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps]));
+  const box = (x, y, bw, bh) => { line(x, y, x + bw, y); line(x + bw, y, x + bw, y + bh); line(x + bw, y + bh, x, y + bh); line(x, y + bh, x, y); };
+  const arrow = (x0, y0, x1, y1) => {
+    line(x0, y0, x1, y1);
+    const a = Math.atan2(y1 - y0, x1 - x0);
+    for (const s of [-1, 1]) line(x1, y1, x1 - 16 * Math.cos(a + s * 0.5), y1 - 16 * Math.sin(a + s * 0.5), 2);
+  };
+  // sticky notes
+  const note = (x, y, tilt, fill, title) => {
+    g.save(); g.translate(x + NOTE / 2, y + NOTE / 2); g.rotate(tilt);
+    g.shadowColor = 'rgba(40, 35, 50, .18)'; g.shadowBlur = 6; g.shadowOffsetY = 3;
+    g.fillStyle = fill; g.fillRect(-NOTE / 2, -NOTE / 2, NOTE, NOTE);
+    g.shadowColor = 'transparent';
+    g.fillStyle = 'rgba(0, 0, 0, .05)'; g.fillRect(-NOTE / 2, -NOTE / 2, NOTE, 22);   // the sticky strip
+    g.fillStyle = ink; g.font = '500 25px "DM Sans", sans-serif';
+    wrapText(g, title, -NOTE / 2 + 16, -NOTE / 2 + 56, NOTE - 32, 31, 4);
+    g.restore();
+  };
+  const notes = (slots, items, colors) => slots.forEach(([x, y, tilt], i) => note(x, y, tilt, colors[i % colors.length], items[i]?.title || 'Add a note in content.js'));
+  notes(HCI_NOTES, P.board?.hci || [], ['#f6c9c2', '#fbe7a6', '#f3d6cf']);
+  notes(ML_NOTES, P.board?.ml || [], ['#c2d6e2', '#cfe3c6', '#d9d0ec']);
+  // a phone wireframe in navy marker: header, image, text lines and a button
+  pen(navy, 4);
+  g.beginPath(); g.roundRect(285, 290, 130, 250, 18); g.stroke();
+  box(300, 318, 100, 18);
+  box(300, 350, 100, 70); line(300, 350, 400, 420); line(400, 350, 300, 420);
+  pen(navy, 3); for (const [y, x1] of [[440, 400], [456, 400], [472, 360]]) line(300, y, x1, y, 4);
+  pen('#e79a92', 14); line(318, 505, 382, 505, 3);
+  // a small neural network in teal marker
+  const layers = [[330, 400, 470], [310, 370, 430, 490], [370, 430]].map((ys, li) => ys.map(y => [570 + li * 85, y]));
+  pen('rgba(63, 143, 140, .55)', 2.5);
+  for (let li = 0; li < 2; li++) for (const [ax, ay] of layers[li]) for (const [bx, by] of layers[li + 1]) line(ax, ay, bx, by, 4);
+  pen(teal, 4);
+  layers.flat().forEach(([x, y]) => { g.fillStyle = '#fbfbfa'; g.beginPath(); g.arc(x, y, 15, 0, Math.PI * 2); g.fill(); g.stroke(); });
+  // a red arrow from the interface to the model: where the two meet
+  pen(red, 5); arrow(440, 400, 535, 400);
+  // bottom left: a little user flow, three steps
+  pen(navy, 4);
+  [[45, 640], [195, 640], [345, 640]].forEach(([x, y], i) => { box(x, y, 105, 62); if (i) arrow(x - 42, y + 31, x - 6, y + 31); });
+  // bottom right: a loss curve falling and levelling off
+  pen(ink, 3.5); arrow(640, 750, 640, 590); arrow(640, 750, 960, 750);
+  pen(red, 4); scrawl(Array.from({ length: 25 }, (_, i) => { const t = i / 24; return [655 + t * 280, 600 + 130 * (1 - Math.exp(-t * 4))]; }));
+  // a tick and a circled question mark beside two notes, as if someone has been working through them
+  pen(teal, 5); scrawl([[1020, 260], [1030, 272], [1048, 240]]);
+  pen(red, 4); g.beginPath(); g.arc(240, 270, 18, 0, Math.PI * 2); g.stroke();
+  g.font = '700 24px "DM Sans", sans-serif'; g.fillText('?', 233, 279);
+});
+plane(BD.z1 - BD.z0, BD.y1 - BD.y0, mat(0xffffff, { map: boardTex, roughness: 0.25 }), -X + 0.031, (BD.y0 + BD.y1) / 2, (BD.z0 + BD.z1) / 2, Math.PI / 2, board);
 
 // Door → back to the personal site
 makeInteractive(door, 'exit', 'Exit', [0.8, 2.32, 2.45], [0.8, 1.15, 0.8, 1.25, 2.5]);
@@ -1347,30 +1575,7 @@ speaker.add(woofer, tweeter, led);
 const speakerIt = makeInteractive(speaker, 'music', 'Music', [-0.98, 1.05, -2.3], [-0.98, -1.4, -0.98, 0.85, -2.3]);
 speakerIt.action = () => toggleMusic();
 
-// ---------- bed, nightstand, standing lamp (decorative) ----------
-part(scene, C.woodLight, 0.95, 2.95, 0.08, 0.3, -0.55, 0.95, 0.02);
-for (const [lx, lz] of [[1.0, -0.5], [2.9, -0.5], [1.0, 0.9], [2.9, 0.9]]) part(scene, C.wood, lx - 0.03, lx + 0.03, 0, 0.08, lz - 0.03, lz + 0.03, 0.01);
-// A duvet laid over the mattress: flat on top, rolling over the sides and the foot, with soft wrinkles
-function duvetGeometry(len, wid, drop) {
-  const r = 0.07, arc = Math.PI * r / 2;
-  const geo = new THREE.PlaneGeometry(len + arc + drop, wid + 2 * (arc + drop), 120, 90);
-  geo.translate(-(arc + drop) / 2, 0, 0);   // the extra length hangs over the foot (−x) only
-  // distance past an edge → [outward, down], following the rolled edge and then hanging straight
-  const fold = e => e < arc ? [r * Math.sin(e / r), r * (1 - Math.cos(e / r))] : [r, r + e - arc];
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const u = pos.getX(i), v = pos.getY(i);
-    let x = u, z = v, y = 0, hangFoot = 0, hangSide = 0;
-    if (u < -len / 2) { const [o, d] = fold(-len / 2 - u); x = -len / 2 - o; y = -d; hangFoot = d / (r + drop); }
-    if (Math.abs(v) > wid / 2) { const [o, d] = fold(Math.abs(v) - wid / 2); z = Math.sign(v) * (wid / 2 + o); y = Math.min(y, -d); hangSide = d / (r + drop); }
-    y += 0.011 * Math.sin(u * 8 + v * 5) * Math.sin(v * 6 - u * 3) + 0.005 * Math.sin(u * 21 + v * 13);
-    z += Math.sign(v) * 0.02 * hangSide * (1 + Math.sin(x * 13 + 1));   // folds in the hanging fabric, always bulging outward
-    x -= 0.02 * hangFoot * (1 + Math.sin(z * 13));
-    pos.setXYZ(i, x, y, -z);   // −z keeps the faces pointing up
-  }
-  geo.computeVertexNormals();
-  return geo;
-}
+// ---------- couch, side table, standing lamp (decorative) ----------
 // A pillow: rounded-rectangle outline, plump middle thinning to a seam, a soft dip in the centre, piping round the edge
 function pillow(w, h, d, material, x, y, z, rz = 0, ry = 0) {
   const sq = (c, e) => Math.sign(c) * Math.abs(c) ** e;
@@ -1408,29 +1613,63 @@ function pillow(w, h, d, material, x, y, z, rz = 0, ry = 0) {
 }
 const VELVET = HQ ? pbr('velour_velvet', [1.5, 1.5], 'nr', 0.5) : {};
 const velvet = color => new THREE.MeshPhysicalMaterial({ color, roughness: 0.9, sheen: 1, sheenRoughness: 0.35, sheenColor: new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.55), ...VELVET });
-function softMesh(geo, color, x, y, z, rz = 0) {
-  const m = new THREE.Mesh(geo, mat(color, { ...LINEN, side: THREE.DoubleSide }));
-  m.position.set(x, y, z);
-  m.rotation.z = rz;
-  m.castShadow = m.receiveShadow = true;
-  scene.add(m);
-  return m;
+// A three-seat couch against the east wall, under the still life, facing the room: rose linen on short oak legs
+const couchMat = mat(0xe7c2ba, LINEN);
+const CZ0 = -0.9, CZ1 = 1.3, ARM = 0.18, SEAT = (CZ1 - CZ0 - 2 * ARM) / 3;   // ends, arm width, width of one seat
+for (const lx of [2.17, 2.92]) for (const lz of [CZ0 + 0.05, (CZ0 + CZ1) / 2, CZ1 - 0.05]) part(scene, C.wood, lx - 0.025, lx + 0.025, 0, 0.1, lz - 0.025, lz + 0.025, 0.008);
+part(scene, couchMat, 2.12, 2.97, 0.1, 0.3, CZ0, CZ1, 0.04);                    // base
+part(scene, couchMat, 2.74, 2.97, 0.28, 0.86, CZ0, CZ1, 0.07);                  // back
+for (const [z0, z1] of [[CZ0, CZ0 + ARM], [CZ1 - ARM, CZ1]]) part(scene, couchMat, 2.12, 2.97, 0.28, 0.62, z0, z1, 0.06);   // arms
+for (let i = 0; i < 3; i++) {
+  const z0 = CZ0 + ARM + i * SEAT;
+  part(scene, couchMat, 2.14, 2.76, 0.3, 0.45, z0 + 0.005, z0 + SEAT - 0.005, 0.05);   // seat cushion
+  pillow(0.5, 0.17, SEAT - 0.04, couchMat, 2.65, 0.69, z0 + SEAT / 2, 1.32, (i - 1) * 0.03);   // back cushion, leaning on the back
 }
-part(scene, mat(C.white, LINEN), 1.0, 2.92, 0.3, 0.5, -0.5, 0.9, 0.06);
-softMesh(duvetGeometry(1.3, 1.44, 0.19), C.pink, 1.65, 0.53, 0.2);
-part(scene, mat(C.blush, LINEN), 2.1, 2.3, 0.45, 0.59, -0.56, 0.96, 0.05);
-pillow(0.44, 0.16, 0.6, mat(C.cream, LINEN), 2.68, 0.585, -0.14, 0.2);
-pillow(0.44, 0.16, 0.6, mat(C.cream, LINEN), 2.68, 0.585, 0.54, 0.2, 0.04);
-pillow(0.36, 0.13, 0.36, velvet(C.teal), 2.45, 0.69, 0.43, 1.1, 0.25);   // velvet cushion
-pillow(0.26, 0.12, 0.42, mat(C.blush, LINEN), 2.35, 0.64, 0.05, 1.0, -0.12);   // small front pillow
-part(scene, mat(C.sage, LINEN), 2.93, 3.0, 0.08, 1.15, -0.58, 0.98, 0.04);
-addCollider(0.9, 3, -0.6, 1.0);
+pillow(0.36, 0.13, 0.36, velvet(C.teal), 2.52, 0.64, CZ1 - ARM - 0.2, 1.1, 0.25);   // velvet cushion
+pillow(0.3, 0.12, 0.34, mat(C.cream, LINEN), 2.53, 0.62, CZ0 + ARM + 0.19, 1.05, -0.2);   // small cream cushion
+addCollider(2.05, 3, CZ0 - 0.05, CZ1 + 0.05);
 
-part(scene, C.woodLight, 2.58, 2.98, 0, 0.48, -1.15, -0.75, 0.02);
-part(scene, C.wood, 2.575, 2.58, 0.28, 0.42, -1.1, -0.8, 0);
-addCollider(2.55, 3, -1.15, -0.75);
+// Coffee table in front of the couch: a rounded glass top on an oak frame, with a lower oak shelf for magazines.
+// The glass is only lightly tinted, so the rug shows through it.
+const CT = { x: RUG.x, z: RUG.z, w: 0.55, l: 1.1, h: 0.42 };   // centre, width (x), length (along the couch), height
+{
+  const ix = CT.w / 2 - 0.05, iz = CT.l / 2 - 0.05;   // the frame sits a little inside the glass
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) part(scene, C.wood, CT.x + sx * ix - 0.02, CT.x + sx * ix + 0.02, 0, CT.h - 0.014, CT.z + sz * iz - 0.02, CT.z + sz * iz + 0.02, 0.006);
+  for (const sx of [-1, 1]) part(scene, C.wood, CT.x + sx * ix - 0.015, CT.x + sx * ix + 0.015, CT.h - 0.06, CT.h - 0.014, CT.z - iz, CT.z + iz, 0.004);   // rails under the glass
+  for (const sz of [-1, 1]) part(scene, C.wood, CT.x - ix, CT.x + ix, CT.h - 0.06, CT.h - 0.014, CT.z + sz * iz - 0.015, CT.z + sz * iz + 0.015, 0.004);
+  part(scene, C.woodLight, CT.x - ix, CT.x + ix, 0.11, 0.13, CT.z - iz, CT.z + iz, 0.006);   // lower shelf
+  const shape = new THREE.Shape(), rw = CT.w / 2, rl = CT.l / 2, rr = 0.09;
+  shape.moveTo(-rw + rr, -rl);
+  shape.lineTo(rw - rr, -rl); shape.quadraticCurveTo(rw, -rl, rw, -rl + rr);
+  shape.lineTo(rw, rl - rr); shape.quadraticCurveTo(rw, rl, rw - rr, rl);
+  shape.lineTo(-rw + rr, rl); shape.quadraticCurveTo(-rw, rl, -rw, rl - rr);
+  shape.lineTo(-rw, -rl + rr); shape.quadraticCurveTo(-rw, -rl, -rw + rr, -rl);
+  const glassTop = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.01, bevelEnabled: true, bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 2, curveSegments: 12 }),
+    new THREE.MeshPhysicalMaterial({ color: 0xe4f2ef, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.22, depthWrite: false, clearcoat: 1, side: THREE.DoubleSide }));
+  glassTop.rotation.x = -Math.PI / 2;   // the shape's y becomes −z, its depth rises up
+  glassTop.position.set(CT.x, CT.h - 0.012, CT.z);
+  glassTop.renderOrder = 1;
+  scene.add(glassTop);
+}
+addCollider(CT.x - CT.w / 2, CT.x + CT.w / 2, CT.z - CT.l / 2, CT.z + CT.l / 2);
+// magazines on the shelf, a mug on the glass
+[[0x2f3b5c, 0.2], [0xf3d6cf, -0.08], [0xb7cbb0, 0.12]].forEach(([col, ry], i) =>
+  part(scene, mat(col, { roughness: 0.6 }), CT.x - 0.15, CT.x + 0.13, 0.13 + i * 0.008, 0.138 + i * 0.008, CT.z - 0.32, CT.z - 0.1, 0.002).rotation.y = ry);
+const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.036, 0.09, 24, 1, true), mat(C.white, { roughness: 0.35, side: THREE.DoubleSide }));
+mug.position.set(CT.x + 0.05, CT.h + 0.045, CT.z - 0.3);
+const mugHandle = new THREE.Mesh(new THREE.TorusGeometry(0.024, 0.006, 8, 16, Math.PI), mug.material);
+mugHandle.rotation.set(0, -Math.PI / 2, -Math.PI / 2);
+mugHandle.position.set(mug.position.x, mug.position.y, mug.position.z + 0.04);
+const coffee = new THREE.Mesh(new THREE.CircleGeometry(0.037, 24), mat(0x5a3a28, { roughness: 0.3 }));
+coffee.rotation.x = -Math.PI / 2;
+coffee.position.set(mug.position.x, CT.h + 0.075, mug.position.z);
+for (const m of [mug, mugHandle, coffee]) { m.castShadow = true; scene.add(m); }
 
-// "Don't Make Me Think" (Steve Krug) lying on the nightstand, cover up and readable from the room
+part(scene, C.woodLight, 2.58, 2.98, 0, 0.48, -1.4, -1.0, 0.02);
+part(scene, C.wood, 2.575, 2.58, 0.28, 0.42, -1.35, -1.05, 0);
+addCollider(2.55, 3, -1.4, -1.0);
+
+// "Don't Make Me Think" (Steve Krug) lying on the side table, cover up and readable from the room
 const coverTex = canvasTex(360, 460, (g, w, h) => {
   g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, w, h);
   g.fillStyle = '#c8362d'; g.fillRect(0, 0, w, 16);
@@ -1444,13 +1683,13 @@ const coverTex = canvasTex(360, 460, (g, w, h) => {
 const pages = mat(C.cream, { roughness: 1 }), bookCover = mat(0xf7f4ec, { roughness: 0.7 });
 const nightBook = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.014, 0.23),
   [pages, bookCover, mat(0xffffff, { map: coverTex, roughness: 0.7 }), bookCover, pages, pages]);   // +x, −x (spine), top, bottom, ±z
-nightBook.position.set(2.77, 0.487, -0.95);
+nightBook.position.set(2.77, 0.487, -1.2);
 nightBook.rotation.y = -Math.PI / 2 + 0.25;   // the cover's top edge points away from the room
 nightBook.castShadow = nightBook.receiveShadow = true;
 scene.add(nightBook);
 
-// Standing lamp on the right of the bed — the warm light of the night mood
-const FL = { x: 2.6, z: 1.32 };
+// Standing lamp on the right of the couch — the warm light of the night mood
+const FL = { x: 2.6, z: 1.6 };
 const flBase = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.14, 0.025, 32), brass());
 flBase.position.set(FL.x, 0.0125, FL.z);
 const flStem = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 1.42, 10), brass());
@@ -1477,15 +1716,15 @@ const artInfo = (group, key, view, frame) => {
 };
 let tagTex = null;
 if (HQ) {
-  // still life above the bed (Bahman Mohassess), in a slim wooden frame
+  // still life above the couch (Bahman Mohassess), in a slim wooden frame
   const stillLife = new THREE.Group();
   scene.add(stillLife);
   const PW = 1.15, PH = PW * 760 / 1200;
   part(stillLife, C.wood, X - 0.045, X, 1.72 - PH / 2 - 0.035, 1.72 + PH / 2 + 0.035, 0.2 - PW / 2 - 0.035, 0.2 + PW / 2 + 0.035, 0.008);
   painting('still-life-fish.webp', PW, PH, X - 0.047, 1.72, 0.2, -Math.PI / 2, stillLife);
-  artInfo(stillLife, 'stillLife', [0.6, 0.2, X, 1.72, 0.2], { w: PW + 0.07, h: PH + 0.07 });   // as close as the bed allows
+  artInfo(stillLife, 'stillLife', [0.6, 0.2, X, 1.72, 0.2], { w: PW + 0.07, h: PH + 0.07 });   // as close as the couch allows
 
-  // the mask (Mansour Ghandriz), large, on the wall between the wardrobe and the door: oak frame around a cream mount
+  // the mask (Mansour Ghandriz), large, on the wall between the rack and the door: oak frame around a cream mount
   const mask = new THREE.Group();
   scene.add(mask);
   const MH = 1.15, MW = MH * 557 / 760, MX = -1.1, MY = 1.45, MAT = 0.07, F = 0.05;
@@ -1497,6 +1736,24 @@ if (HQ) {
   part(mask, C.woodLight, MX + ox, MX + ox + F, MY - oy, MY + oy, Z - 0.055, Z, 0.006);           // right
   painting('mask.webp', MW, MH, MX, MY, Z - 0.027, Math.PI, mask);
   artInfo(mask, 'mask', [MX, 1.3, MX, MY, Z], { w: 2 * (ox + F), h: 2 * (oy + F) });
+
+  // Ali Akbar Sadeghi: a big painting in a deep oak frame, standing on the floor and leaning on the wall right of the door
+  const lean = new THREE.Group();
+  scene.add(lean);
+  const LW = 0.7, LH = LW * 760 / 522, LF = 0.06, LD = 0.045, TILT = 0.17;   // picture, frame width and depth, lean angle
+  const LFH = LH + 2 * LF;
+  // the group's origin is the back bottom edge on the floor; its top leans back onto the wall
+  lean.position.set(1.85, 0, Z - 0.005 - LFH * Math.sin(TILT));
+  lean.rotation.x = TILT;
+  const lox = LW / 2 + LF;
+  part(lean, C.wood, -lox, lox, LFH - LF, LFH, -LD, 0, 0.008);   // top
+  part(lean, C.wood, -lox, lox, 0, LF, -LD, 0, 0.008);           // bottom
+  part(lean, C.wood, -lox, -lox + LF, LF, LFH - LF, -LD, 0, 0.008);   // left
+  part(lean, C.wood, lox - LF, lox, LF, LFH - LF, -LD, 0, 0.008);     // right
+  part(lean, C.wood, -lox + LF, lox - LF, LF, LFH - LF, -0.012, -0.004, 0);   // backing board
+  painting('sadeghi.webp', LW, LH, 0, LF + LH / 2, -0.014, Math.PI, lean);
+  addCollider(1.85 - lox, 1.85 + lox, Z - 0.3, Z);
+  artInfo(lean, 'sadeghi', [1.85, 1.0, 1.85, 0.65, Z], { w: 2 * lox, h: LFH });
 
   // A woven label on the rug's corner, like the tags on real carpets: clicking it tells the rug's story.
   // (The rug itself stays a floor to walk on.)
@@ -1519,7 +1776,7 @@ if (HQ) {
 Promise.all([
   document.fonts.load('46px "DM Serif Display"'),
   document.fonts.load('22px "DM Sans"'),
-]).catch(() => {}).finally(() => [screenTex, spineTex, coverTex, tagTex, ...certTextures].filter(Boolean).forEach(t => t.redraw()));
+]).catch(() => {}).finally(() => [screenTex, spineTex, coverTex, tagTex, boardTex, ...certTextures].filter(Boolean).forEach(t => t.redraw()));
 
 // walk-target marker
 const marker = new THREE.Mesh(new THREE.RingGeometry(0.11, 0.15, 36), new THREE.MeshBasicMaterial({ color: 0x4f9ea0, transparent: true, opacity: 0 }));
@@ -1634,7 +1891,7 @@ function select(it) {
   setHover(null);
   if (it.action) { it.action(); return; }
   if (state.panel) closePanel();
-  if (it.key === 'garments') wardrobeState.target = 1;
+  if (it.key === 'garments') rackSway.t = 0;
   goTo(it.view, () => openPanel(it.key));
 }
 
@@ -1734,7 +1991,7 @@ const STEP_FILES = {
   wood: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => `assets/sounds/footstep_0${i}.ogg`),
   rug: [],   // no carpet recordings: on the rug the wood steps are muffled instead
 };
-const SFX_FILES = ['door_latch', 'door_open', 'door_close', 'wardrobe_open', 'wardrobe_close'];
+const SFX_FILES = ['door_latch', 'door_open', 'door_close'];
 const sound = { ctx: null, master: null, on: true, steps: { wood: [], rug: [] }, sfx: {} };   // on by default, starts on "Step inside"
 // The files are downloaded while the intro card is still up (no audio context needed for that), so the entrance
 // door can sound right after "Step inside"; they are decoded once the click has created the context.
@@ -1885,7 +2142,7 @@ function update(dt) {
     const waiting = sound.on && !(sound.sfx.door_latch && sound.sfx.door_open) && (state.introWait += dt) < 1.5;
     const t0 = state.introT, t = (state.introT += waiting ? 0 : dt);
     const crossed = at => t0 < at && t >= at;
-    if (crossed(0.2)) { playSfx('door_latch'); playSfx('door_open', { delay: 0.1, rate: 0.92 }); }   // handle, then the heavy door swings (lower than the wardrobe)
+    if (crossed(0.2)) { playSfx('door_latch'); playSfx('door_open', { delay: 0.1, rate: 0.92 }); }   // handle, then the heavy door swings
     if (crossed(3.1)) playSfx('door_close');                                              // shuts behind you
     const open = t < 2.6 ? ease(clamp01(t / 1.1)) : 1 - ease(clamp01((t - 2.6) / 0.9));
     door.rotation.y = open * 1.45;
@@ -1953,13 +2210,8 @@ function update(dt) {
   ledMat.emissiveIntensity = music.on ? 1.6 : 0;
   woofer.scale.y = music.on ? 1 + 1.5 * Math.max(0, Math.sin(clock.elapsedTime * Math.PI * 2 * 85 / 60)) ** 8 : 1;
 
-  if (wardrobeState.target !== wardrobeState.heard) {   // the wardrobe: a wooden creak to open, a light cabinet knock to close
-    if (wardrobeState.target) playSfx('wardrobe_open', { rate: 1.1, gain: 0.8 });
-    else if (wardrobeState.heard !== undefined) playSfx('wardrobe_close', { delay: 0.35, rate: 1.3, gain: 0.55 });
-    wardrobeState.heard = wardrobeState.target;
-  }
-  wardrobeState.open += (wardrobeState.target - wardrobeState.open) * Math.min(1, dt * 4);
-  for (const d of wDoors) d.rotation.y = d.userData.dir * ease(wardrobeState.open) * 1.25;
+  rackSway.t += dt;   // the garments swing a little on their hangers when picked, then settle
+  hangers.forEach((hg, i) => { hg.rotation.z = 0.05 * Math.sin(rackSway.t * 4.2 + i * 0.9) * Math.exp(-rackSway.t * 1.2); });
 
   marker.material.opacity = Math.max(0, marker.material.opacity - dt * (state.walk ? 0.3 : 2));
   const time = clock.elapsedTime;
@@ -1967,7 +2219,7 @@ function update(dt) {
   curtains.forEach((c, i) => {
     const pos = c.geometry.attributes.position, rest = c.userData.rest;
     for (let v = 0; v < pos.count; v++) {
-      const x = rest[v * 3], y = rest[v * 3 + 1], down = -y / 1.95;
+      const x = rest[v * 3], y = rest[v * 3 + 1], down = -y / CURTAIN_H;
       const gust = 0.5 + 0.3 * Math.sin(time * 0.6 + i * 2) + 0.2 * Math.sin(time * 1.7 + x * 5 + i);
       pos.setZ(v, rest[v * 3 + 2] + 0.04 * down * down * gust);
     }
@@ -2002,7 +2254,7 @@ applyMood();
 const enter = $('#enter');
 function ready() { enter.disabled = false; enter.textContent = 'Step inside'; }
 if (HQ) {
-  manager.onProgress = (url, done, total) => { if (enter.disabled) enter.textContent = `Preparing the room… ${Math.round(done / total * 100)}%`; };
+  manager.onProgress = (url, done, total) => { if (enter.disabled) enter.textContent = `Preparing the studio… ${Math.round(done / total * 100)}%`; };
   manager.onLoad = ready;
 } else ready();
 </script>

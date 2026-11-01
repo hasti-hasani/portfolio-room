@@ -3,7 +3,8 @@ the page shows the credit while the speaker plays; keep that if you change the c
 
 Paintings (supplied by the site owner — not covered by the CC0 note above; check rights / credit the artists)
   art/still-life-fish.webp                   still life with fish (above the bed)
-  art/mask.webp                              mask (wall between wardrobe and door)
+  art/mask.webp                              mask (wall between rack and door)
+  art/sadeghi.webp                           Ali Akbar Sadeghi (leaning on the wall right of the door)
 
 Music (CC BY 3.0, https://creativecommons.org/licenses/by/3.0/)
   music/moonwalk-late-night-cafe.mp3        "Late Night Cafe (Lofi Hip-hop)" by Moonwalk
@@ -15,7 +16,7 @@ Kenney (https://kenney.nl, CC0)
   sounds/*.ogg                              from the "RPG Audio" pack — see sounds/README.txt for which file is which
 
 Poly Haven (https://polyhaven.com, CC0)
-  hdri/lythwood_room_1k.hdr                 Lythwood Room
+  hdri/lythwood_room_512.hdr                Lythwood Room (1k version halved to 512 px)
   textures/laminate_floor_02                Laminate Floor 02
   textures/white_oak_veneer                 White Oak Veneer
   textures/plastered_wall_04                Plastered Wall 04
@@ -23,7 +24,6 @@ Poly Haven (https://polyhaven.com, CC0)
   textures/velour_velvet                    Velour Velvet
   models/potted_plant_02                    Potted Plant 02
   models/potted_plant_04                    Potted Plant 04
-  models/painted_wooden_chair_02            Painted Wooden Chair 02
 
 The Metropolitan Museum of Art, Open Access (CC0), via Wikimedia Commons
   rug/silk_kashan_carpet_met.webp            Silk Kashan Carpet, Iran, 16th century (MET DT5436)
