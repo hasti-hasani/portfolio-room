@@ -9,7 +9,7 @@ import { scene } from '../core/renderer.js';
 export let hemi, sun, bounce;
 
 export function buildLights() {
-  hemi = new THREE.HemisphereLight(0xfff8f2, 0xf0e0d4, HQ ? 0.7 : 1.9);
+  hemi = new THREE.HemisphereLight(0xfff8f2, 0xf0e0d4, HQ ? 0.5 : 1.9);
   scene.add(hemi);
   sun = new THREE.DirectionalLight(0xfff0d6, 1.9);   // gentle daylight: brighter washed the pastels out
   sun.position.set(2.5, 4.6, -6.5);

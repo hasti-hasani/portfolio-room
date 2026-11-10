@@ -12,6 +12,8 @@ camera.rotation.order = 'YXZ';
 export const START_DPR = Math.min(devicePixelRatio, 1.5);
 
 export let renderer, canvas;
+// Daylight exposure; the night mood has its own (systems/mood.js). 1.05 washed the pastels out to white.
+export const DAY_EXPOSURE = 0.85, NIGHT_EXPOSURE = 1.0;
 
 // Throws when the browser has no WebGL; the caller then shows the plain 2D page instead
 export function createRenderer(container) {
@@ -23,7 +25,7 @@ export function createRenderer(container) {
   renderer.shadowMap.autoUpdate = false;          // redrawn only when `shadows.dirty` (see core/frame.js)
   renderer.shadowMap.needsUpdate = true;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = HQ ? 1.05 : 1.15;
+  renderer.toneMappingExposure = HQ ? DAY_EXPOSURE : 1.15;
   canvas = renderer.domElement;
   container.append(canvas);
 }

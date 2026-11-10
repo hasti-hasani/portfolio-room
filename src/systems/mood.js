@@ -3,8 +3,8 @@ import * as THREE from 'three';
 import { $ } from '../util.js';
 import { invalidate, shadows } from '../core/frame.js';
 import { env } from '../core/materials.js';
-import { ENV } from '../config.js';
-import { renderer, scene } from '../core/renderer.js';
+import { ENV, HQ } from '../config.js';
+import { renderer, scene, NIGHT_EXPOSURE } from '../core/renderer.js';
 import { hemi, sun, bounce } from '../world/lights.js';
 import { ceilingMat } from '../world/room.js';
 import { sky, nightSky, tulleMat } from '../world/window.js';
@@ -19,17 +19,17 @@ let MOOD, MOOD_COLORS;
 // Call once the room is built: it reads the daytime values as they are
 export function initMood() {
   MOOD = [
-    [hemi, 'intensity', hemi.intensity, hemi.intensity * 0.18],
+    [hemi, 'intensity', hemi.intensity, HQ ? 0.126 : hemi.intensity * 0.18],   // night kept as it was before the day was toned down
     [sun, 'intensity', sun.intensity, 0],
     [bounce, 'intensity', bounce.intensity, 0.7],                  // window light → cool moonlight
     [lampLight, 'intensity', lampLight.intensity, 3.2],
     [floorLight, 'intensity', 0, 4],
     [shade.material, 'emissiveIntensity', 0.35, 0.9],
     [floorShade.material, 'emissiveIntensity', 0, 0.85],
-    [ceilingMat, 'emissiveIntensity', 0.35, 0.03],
+    [ceilingMat, 'emissiveIntensity', 0.15, 0.03],   // by day: was 0.35, which bleached the ceiling white
     [tulleMat, 'emissiveIntensity', 0.12, 0],
     [nightSky.material, 'opacity', 0, 1],
-    [renderer, 'toneMappingExposure', renderer.toneMappingExposure, renderer.toneMappingExposure * 0.95],
+    [renderer, 'toneMappingExposure', renderer.toneMappingExposure, HQ ? NIGHT_EXPOSURE : renderer.toneMappingExposure * 0.95],
   ];
   MOOD_COLORS = [[hemi.color, 0xfff8f2, 0x8090c0], [bounce.color, 0xfff1e6, 0x9fb4e8]];
 
