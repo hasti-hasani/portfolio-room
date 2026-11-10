@@ -5,6 +5,16 @@ import { renderer } from '../core/renderer.js';
 
 export const statsOn = new URLSearchParams(location.search).has('stats');
 let el = null;
+
+// Startup, phase by phase: how long each took since the one before (the page itself counts from navigation)
+const phases = [];
+let lastMark = 0;
+export function mark(name) {
+  const now = performance.now();
+  if (name !== 'start') phases.push(`${name} ${Math.round(now - lastMark)}`);
+  else phases.push(`page ${Math.round(now)}`);
+  lastMark = now;
+}
 const st = { t: 0, frames: 0, drawn: 0, worst: 0, js: 0, hitches: 0, last: [] };
 
 export function trackStats(raw, drawn, js, shadowRedraw) {
@@ -25,6 +35,7 @@ export function trackStats(raw, drawn, js, shadowRedraw) {
     `fps ${Math.round(st.frames / st.t)}  (drawn ${st.drawn})   slowest frame ${Math.round(st.worst * 1000)} ms`,
     `code per frame up to ${st.js.toFixed(1)} ms`,
     `jerks while moving: ${st.hitches}${st.last.length ? '   last: ' + st.last.join(', ') : ''}`,
+    `startup ms: ${phases.join('  ')}`,
     `draw calls ${i.calls}   triangles ${Math.round(i.triangles / 1000)}k`,
     `resolution ${Math.round(renderer.getPixelRatio() * 100)}%  ${gl.drawingBufferWidth}×${gl.drawingBufferHeight}`,
     gpu ? gl.getParameter(gpu.UNMASKED_RENDERER_WEBGL).slice(0, 60) : '',

@@ -34,6 +34,7 @@ import { mergeStatic, addContactShadows, MAP_KEYS } from './systems/optimize.js'
 import { initQuality } from './systems/quality.js';
 import { initPicking } from './systems/picking.js';
 import { startLoop } from './systems/loop.js';
+import { mark } from './systems/stats.js';
 import { closePanel } from './ui/panels.js';
 import { openSimple } from './ui/simple.js';
 
@@ -53,6 +54,7 @@ try {
 // ---------- build the room ----------
 // The order matters: pieces that use the shared random sequence (floor, curtains, plants, books, garments)
 // must take their numbers in the same order every time, or they would look different.
+mark('start');
 buildLights();
 buildRoom();
 buildWindow();
@@ -71,6 +73,7 @@ speakerIt.action = toggleMusic;   // the speaker plays in place, no walking
 buildLounge();
 buildPaintings();
 buildMarker();
+mark('build');
 
 // Redraw the painted textures with text once the web fonts arrive
 Promise.all([
@@ -85,6 +88,7 @@ for (const o of KEEP_APART) o.traverse(m => { m.castShadow = false; });
 addContactShadows();
 scene.updateMatrixWorld(true);
 mergeStatic(scene, KEEP_APART);
+mark('merge');
 initPicking();
 
 initMood();
@@ -106,11 +110,13 @@ enter.addEventListener('click', () => {
 // Before the visitor steps in, every shader is built and every texture is sent to the graphics card — otherwise
 // each happens the first time a thing comes into view, and the first turns of the head stutter.
 function ready() {
+  mark('textures');
   enter.textContent = 'Almost ready…';
   preloadSounds();   // now that the studio is in, the door and footstep sounds can download
   scene.traverse(o => [o.material].flat().forEach(m => m && MAP_KEYS.concat('envMap').forEach(k => m[k]?.isTexture && renderer.initTexture(m[k]))));
   renderer.compileAsync(scene, camera).catch(() => {}).finally(() => {
     enter.disabled = false; enter.textContent = 'Step inside';
+    mark('shaders');
     // then, without holding up the visitor, the shaders for the other mood (see systems/mood.js)
     (window.requestIdleCallback || setTimeout)(() => warmMoods(camera));
   });

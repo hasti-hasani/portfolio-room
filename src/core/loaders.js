@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { RES } from '../config.js';
+import { RES, ANISO } from '../config.js';
 
 // Everything on `manager` must be in before "Step inside" is enabled.
 // `lateManager` loads on the side (paintings, the big plant): those appear when ready.
@@ -43,7 +43,7 @@ export function tex(path, repeat, color = false, onLate) {
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   if (repeat) t.repeat.set(...repeat);
   if (color) t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
+  t.anisotropy = ANISO;
   if (e.done) { t.needsUpdate = true; onLate?.(t); }
   else { e.users.push(t); if (onLate) e.then.push(() => onLate(t)); }
   return t;

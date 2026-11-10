@@ -14,7 +14,9 @@ function lowerTo(r) {
   invalidate();
   return true;
 }
-const degrade = [() => lowerTo(1)];   // never lower: below 1 the whole studio turns blurry
+// One step at a time: 1.25 first (hardly softer than 1.5, about 30% fewer pixels), then 1. Never lower: below 1 the
+// whole studio turns blurry. A step that changes nothing (the screen already starts lower) is skipped.
+const degrade = [() => lowerTo(1.25), () => lowerTo(1)];
 
 function showQuality() {
   const el = $('#quality');

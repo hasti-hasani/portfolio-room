@@ -1,6 +1,7 @@
 // Building blocks for the furniture: boxes, planes, rods, canvas-painted textures, and the floor plan for walking.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { ANISO } from '../config.js';
 import { scene } from './renderer.js';
 import { mat } from './materials.js';
 
@@ -46,7 +47,7 @@ export function canvasTex(w, h, draw, repeat) {
   draw(g, w, h);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
+  t.anisotropy = ANISO;
   if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat); }
   t.redraw = () => { g.clearRect(0, 0, w, h); draw(g, w, h); t.needsUpdate = true; };
   return t;

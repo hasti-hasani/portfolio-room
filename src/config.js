@@ -4,6 +4,9 @@ export const isTouch = matchMedia('(pointer: coarse)').matches;
 // Photo textures, the HDRI and the models need a web server; opened as a plain file, the room keeps its drawn look
 export const HQ = location.protocol !== 'file:';
 export const RES = isTouch ? '512' : '1k';   // phones get half-size texture sets: as sharp on a small screen, a quarter of the download
+// Texture filtering at steep angles (the floor and walls seen from standing height). It only costs where a surface is
+// seen at an angle, and there it costs memory bandwidth, which phones have little of; 4× is plenty on a small screen.
+export const ANISO = isTouch ? 4 : 8;
 export const ENV = 0.9;                      // how strongly the HDRI lights the room
 
 export const C = {
