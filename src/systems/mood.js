@@ -59,6 +59,21 @@ export function applyMood() {
   invalidate();
 }
 
+// Switching mood changes which lights are on (the sun, the floor lamp), and every surface's shader depends on that:
+// the first switch would rebuild them all at once and the studio would freeze for a moment, on phones for a second
+// or more. So the shaders for the other light setups are built ahead, in the background: the lights are set the
+// way each stage of the switch has them, compiled, and put back in the same instant, before any frame is drawn.
+// Stages: day (sun, no floor lamp) · in between (both) · night (floor lamp, no sun).
+export function warmMoods(camera) {
+  const was = [sun.visible, floorLight.visible, sky.visible, nightSky.visible];
+  const set = ([s, f, d, ni]) => { sun.visible = s; floorLight.visible = f; sky.visible = d; nightSky.visible = ni; };
+  const waits = [[true, false, true, false], [true, true, true, true], [false, true, false, true]].map(stage => {
+    set(stage);
+    try { return renderer.compileAsync(scene, camera); } finally { set(was); }
+  });
+  return Promise.all(waits).catch(() => {});
+}
+
 export function updateMood(dt) {
   if (mood.n === mood.target) return;
   mood.n = mood.target > mood.n ? Math.min(mood.target, mood.n + dt / 2.5) : Math.max(mood.target, mood.n - dt / 2.5);

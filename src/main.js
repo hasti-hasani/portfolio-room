@@ -27,7 +27,7 @@ import { buildPaintings } from './world/paintings.js';
 import { makeInteractive } from './systems/interactives.js';
 import { buildMarker, marker } from './systems/player.js';
 import { initInput } from './systems/interaction.js';
-import { initMood } from './systems/mood.js';
+import { initMood, warmMoods } from './systems/mood.js';
 import { toggleMusic } from './systems/music.js';
 import { sound, startAudio, playClick, preloadSounds, initSoundButton } from './systems/audio.js';
 import { mergeStatic, addContactShadows, MAP_KEYS } from './systems/optimize.js';
@@ -109,7 +109,11 @@ function ready() {
   enter.textContent = 'Almost ready…';
   preloadSounds();   // now that the studio is in, the door and footstep sounds can download
   scene.traverse(o => [o.material].flat().forEach(m => m && MAP_KEYS.concat('envMap').forEach(k => m[k]?.isTexture && renderer.initTexture(m[k]))));
-  renderer.compileAsync(scene, camera).catch(() => {}).finally(() => { enter.disabled = false; enter.textContent = 'Step inside'; });
+  renderer.compileAsync(scene, camera).catch(() => {}).finally(() => {
+    enter.disabled = false; enter.textContent = 'Step inside';
+    // then, without holding up the visitor, the shaders for the other mood (see systems/mood.js)
+    (window.requestIdleCallback || setTimeout)(() => warmMoods(camera));
+  });
 }
 
 lateManager.onProgress = invalidate;   // a painting came in
