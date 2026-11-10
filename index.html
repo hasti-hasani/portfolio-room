@@ -6,6 +6,10 @@
 <meta name="description" content="A walk-through 3D studio: projects, articles, certificates and garments.">
 <title>My Studio</title>
 <link rel="stylesheet" href="/src/styles.css">
+<!-- The lighting picture (HDRI) is the largest file "Step inside" waits for: start it with three.js, not after it.
+     Same size choice as src/world/lights.js (phones: 256). as=fetch + crossorigin: it is fetched, not shown as an image. -->
+<link rel="preload" as="fetch" crossorigin="anonymous" href="assets/hdri/lythwood_room_512.hdr" media="(pointer: fine), (pointer: none)">
+<link rel="preload" as="fetch" crossorigin="anonymous" href="assets/hdri/lythwood_room_256.hdr" media="(pointer: coarse)">
 </head>
 <body>
 <div id="scene"></div>

@@ -120,7 +120,19 @@ function ready() {
     frame.hold = false; invalidate();   // first frame: the room appears behind the card
     // then, without holding up the visitor, the shaders for the other mood (see systems/mood.js)
     (window.requestIdleCallback || setTimeout)(() => warmMoods(camera));
+    registerOffline();
   });
+}
+
+// Production only (in development it would serve stale modules): see public/sw.js. Once registered, the worker is
+// told which files this visit already loaded, and again a little later for the paintings and the plant model.
+function registerOffline() {
+  if (!import.meta.env.PROD || !('serviceWorker' in navigator) || !location.protocol.startsWith('http')) return;
+  const loaded = () => performance.getEntriesByType('resource').map(r => r.name).filter(u => /\/(static|assets)\//.test(u));
+  navigator.serviceWorker.register('./sw.js').then(() => navigator.serviceWorker.ready).then(reg => {
+    reg.active?.postMessage({ cache: loaded() });
+    setTimeout(() => reg.active?.postMessage({ cache: loaded() }), 20000);
+  }).catch(() => {});
 }
 
 lateManager.onProgress = invalidate;   // a painting came in
