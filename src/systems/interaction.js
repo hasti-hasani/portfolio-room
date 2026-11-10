@@ -50,6 +50,7 @@ export function select(it) {
 }
 
 const raycaster = new THREE.Raycaster();
+raycaster.firstHitOnly = true;   // per mesh: only the nearest hit is needed (see systems/picking.js)
 const ndc = new THREE.Vector2();
 function pick(e) {
   ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);

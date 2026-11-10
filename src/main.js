@@ -32,6 +32,7 @@ import { toggleMusic } from './systems/music.js';
 import { sound, startAudio, playClick, preloadSounds, initSoundButton } from './systems/audio.js';
 import { mergeStatic, addContactShadows, MAP_KEYS } from './systems/optimize.js';
 import { initQuality } from './systems/quality.js';
+import { initPicking } from './systems/picking.js';
 import { startLoop } from './systems/loop.js';
 import { closePanel } from './ui/panels.js';
 import { openSimple } from './ui/simple.js';
@@ -84,6 +85,7 @@ for (const o of KEEP_APART) o.traverse(m => { m.castShadow = false; });
 addContactShadows();
 scene.updateMatrixWorld(true);
 mergeStatic(scene, KEEP_APART);
+initPicking();
 
 initMood();
 initQuality();
