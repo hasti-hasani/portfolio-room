@@ -4,13 +4,13 @@
 // scrolled out of view. The loop stops completely and starts again when it comes back.
 import * as THREE from 'three';
 import { state } from '../core/state.js';
-import { frame, invalidate, shadows } from '../core/frame.js';
+import { frame, invalidate, shadows, pace } from '../core/frame.js';
 import { renderer, scene, camera, canvas } from '../core/renderer.js';
 import { updatePlayer, marker } from './player.js';
 import { updateHover } from './interaction.js';
 import { updateHotspots } from './interactives.js';
 import { updateMood, moodChanging } from './mood.js';
-import { music, updateMusic } from './music.js';
+import { updateMusic } from './music.js';
 import { updateRack, rackMoving } from '../world/rack.js';
 import { checkPerf } from './quality.js';
 import { statsOn, trackStats } from './stats.js';
@@ -21,7 +21,7 @@ const lastCam = new THREE.Matrix4(), lastProj = new THREE.Matrix4();
 function needsRender(raw) {
   camera.updateMatrixWorld();
   const moved = !lastCam.equals(camera.matrixWorld) || !lastProj.equals(camera.projectionMatrix);
-  const busy = state.mode === 'intro' || moodChanging() || music.on || rackMoving()
+  const busy = state.mode === 'intro' || moodChanging() || rackMoving()
     || marker.material.opacity > 0 || frame.marker > 0;   // incl. the frame the marker fades out
   frame.marker = marker.material.opacity;
   if (!(moved || busy || frame.dirty || (frame.idle += raw) > 1)) return false;
@@ -30,10 +30,14 @@ function needsRender(raw) {
   return true;
 }
 
-function loop() {
+let lastRun = -1e9;
+function loop(now) {
   if (!visible()) { view.running = false; return; }
   requestAnimationFrame(loop);
-  const raw = clock.getDelta(), dt = Math.min(raw, 0.05);
+  if (now - lastRun < 750 / pace.fps) return;   // too soon for the frame rate we keep (¾ of the interval: screens tick a little unevenly)
+  lastRun = now;
+  // capped at 0.1 s: a lower cap made walking and turning slow down on devices drawing under 20 frames a second
+  const raw = clock.getDelta(), dt = Math.min(raw, 0.1);
   const t0 = performance.now(), shadowRedraw = shadows.dirty;
 
   updatePlayer(dt);

@@ -35,5 +35,11 @@ export function updateMusic(dt, time) {
     if (!music.on && v === 0 && !music.el.paused) music.el.pause();
   }
   ledMat.emissiveIntensity = music.on ? 1.6 : 0;
-  woofer.scale.y = music.on ? 1 + 1.5 * Math.max(0, Math.sin(time * Math.PI * 2 * 85 / 60)) ** 8 : 1;   // pumps at 85 bpm
+  // The cone pumps at 85 bpm. Only a new frame when its shape visibly changes, about 20 times a second at most:
+  // drawing the whole studio at full speed for a small speaker kept phones busy for as long as the music played.
+  if ((pump.t += dt) < 0.05 && music.on) return;
+  pump.t = 0;
+  const y = music.on ? 1 + Math.round(30 * Math.max(0, Math.sin(time * Math.PI * 2 * 85 / 60)) ** 8) / 20 : 1;
+  if (y !== woofer.scale.y) { woofer.scale.y = y; invalidate(); }
 }
+const pump = { t: 0 };

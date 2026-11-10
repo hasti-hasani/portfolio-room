@@ -1,6 +1,6 @@
 // The visitor: walking in through the door, walking (keys or click-to-walk), easing to an object, and the camera.
 import * as THREE from 'three';
-import { X, Z, EYE, RADIUS, SPEED, START } from '../config.js';
+import { X, Z, EYE, RADIUS, SPEED, START, isTouch } from '../config.js';
 import { clamp01, ease } from '../util.js';
 import { state } from '../core/state.js';
 import { camera, scene } from '../core/renderer.js';
@@ -13,6 +13,29 @@ import { showHint, hideHint } from './hint.js';
 export const player = { x: START.x, z: 3.9, yaw: 0, pitch: -0.02 };
 export const keys = {};
 const stride = { x: player.x, z: player.z, d: 0 };   // distance walked since the last footstep
+
+// Smoothing, the same at any frame rate: each frame covers this share of what is left (k = how quickly, per second)
+const approach = (k, dt) => 1 - Math.exp(-k * dt);
+
+// Drag-to-look: the pointer only adds to what is still to turn; the camera turns toward it over a few frames.
+// Applying every pointer event straight to the camera made it jump in steps on slower devices.
+const look = { yaw: 0, pitch: 0 };
+const LOOK = isTouch ? 14 : 20;
+export function addLook(dyaw, dpitch) {
+  look.yaw += dyaw;
+  look.pitch = THREE.MathUtils.clamp(player.pitch + look.pitch + dpitch, -1.1, 1.1) - player.pitch;
+}
+function applyLook(dt) {
+  if (!look.yaw && !look.pitch) return;
+  const a = Math.abs(look.yaw) + Math.abs(look.pitch) < 2e-4 ? 1 : approach(LOOK, dt);
+  player.yaw += look.yaw * a; look.yaw -= look.yaw * a;
+  player.pitch += look.pitch * a; look.pitch -= look.pitch * a;
+  if (a === 1) look.yaw = look.pitch = 0;
+}
+
+// Walking speeds up and slows down instead of starting and stopping at full speed
+const vel = { x: 0, z: 0 };
+const ACCEL = 12, ARRIVE = 3;   // ARRIVE = ACCEL / 4: a click-to-walk slows into its spot without overshooting
 
 // Keep a point inside the room and out of the furniture
 export function resolve(p) {
@@ -39,6 +62,7 @@ function frameFor(view) {
 }
 export function goTo(view, done) {
   state.walk = null;
+  look.yaw = look.pitch = vel.x = vel.z = 0;
   const f = frameFor(view);
   closeUp.tk = f.k; closeUp.tox = f.ox;
   const from = { x: player.x, z: player.z, yaw: player.yaw, pitch: player.pitch };
@@ -92,26 +116,34 @@ export function updatePlayer(dt) {
     let f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
     let s = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
     player.yaw += ((keys.ArrowLeft ? 1 : 0) - (keys.ArrowRight ? 1 : 0)) * 1.8 * dt;
+    let tx = 0, tz = 0;   // the velocity we want
     if (f || s) {
       state.walk = null;
       const len = Math.hypot(f, s); f /= len; s /= len;
       const sin = Math.sin(player.yaw), cos = Math.cos(player.yaw);
-      player.x += (-sin * f + cos * s) * SPEED * dt;
-      player.z += (-cos * f - sin * s) * SPEED * dt;
-      resolve(player);
+      tx = (-sin * f + cos * s) * SPEED;
+      tz = (-cos * f - sin * s) * SPEED;
       hideHint();
     } else if (state.walk) {
       const dx = state.walk.x - player.x, dz = state.walk.z - player.z, d = Math.hypot(dx, dz);
-      if (d < 0.04) state.walk = null;
-      else {
-        const step = Math.min(d, SPEED * dt), px = player.x, pz = player.z;
-        player.x += dx / d * step;
-        player.z += dz / d * step;
-        resolve(player);
-        if (Math.hypot(player.x - px, player.z - pz) < step * 0.3) state.walk = null;   // blocked by furniture
-      }
+      if (d < 0.03) state.walk = null;
+      else { const sp = Math.min(SPEED, d * ARRIVE); tx = dx / d * sp; tz = dz / d * sp; }
     }
-  }
+    const a = approach(ACCEL, dt);
+    vel.x += (tx - vel.x) * a; vel.z += (tz - vel.z) * a;
+    if (!tx && !tz && Math.hypot(vel.x, vel.z) < 0.01) vel.x = vel.z = 0;
+    else if (dt > 0) {
+      const px = player.x, pz = player.z, want = Math.hypot(vel.x, vel.z) * dt;
+      player.x += vel.x * dt; player.z += vel.z * dt;
+      resolve(player);
+      const mx = player.x - px, mz = player.z - pz;
+      // against furniture or a wall: lose the speed going into it, keep sliding along it
+      const keep = (v, moved) => moved * v <= 0 ? 0 : Math.abs(moved) < Math.abs(v * dt) ? moved / dt : v;
+      vel.x = keep(vel.x, mx); vel.z = keep(vel.z, mz);
+      if (state.walk && want > 1e-4 && Math.hypot(mx, mz) < want * 0.3) state.walk = null;   // blocked
+    }
+  } else vel.x = vel.z = 0;
+  if (state.mode === 'play' && !state.tween) applyLook(dt);
 
   stride.d += Math.hypot(player.x - stride.x, player.z - stride.z);
   stride.x = player.x; stride.z = player.z;

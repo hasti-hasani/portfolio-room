@@ -4,7 +4,7 @@ import { isTouch } from '../config.js';
 import { state } from '../core/state.js';
 import { invalidate } from '../core/frame.js';
 import { scene, camera, canvas } from '../core/renderer.js';
-import { player, keys, goTo, walkTo } from './player.js';
+import { keys, goTo, walkTo, addLook } from './player.js';
 import { playClick } from './audio.js';
 import { hideHint } from './hint.js';
 import { rackSway } from '../world/rack.js';
@@ -87,8 +87,7 @@ export function initInput() {
       }
       if (ptr.dragged) {
         const k = isTouch ? 0.005 : 0.0035;
-        player.yaw += (e.clientX - ptr.x) * k;
-        player.pitch = THREE.MathUtils.clamp(player.pitch + (e.clientY - ptr.y) * k, -1.1, 1.1);
+        addLook((e.clientX - ptr.x) * k, (e.clientY - ptr.y) * k);
         state.tween = null;
         hideHint();
       }
