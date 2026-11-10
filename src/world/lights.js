@@ -1,7 +1,7 @@
 // Daylight: sky fill, the sun through the window (the only shadow caster), a soft window bounce, and the HDRI.
 // These are the daytime values; systems/mood.js blends them toward night.
 import * as THREE from 'three';
-import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { HQ, isTouch } from '../config.js';
 import { manager } from '../core/loaders.js';
 import { scene } from '../core/renderer.js';
@@ -24,7 +24,7 @@ export function buildLights() {
   bounce.position.set(1, 1.9, -1.6);
   scene.add(bounce);
 
-  if (HQ) new RGBELoader(manager).load(`assets/hdri/lythwood_room_${isTouch ? 256 : 512}.hdr`, t => {
+  if (HQ) new HDRLoader(manager).load(`assets/hdri/lythwood_room_${isTouch ? 256 : 512}.hdr`, t => {
     t.mapping = THREE.EquirectangularReflectionMapping;
     scene.environment = t;
   });

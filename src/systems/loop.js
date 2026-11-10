@@ -15,7 +15,13 @@ import { updateRack, rackMoving } from '../world/rack.js';
 import { checkPerf } from './quality.js';
 import { statsOn, trackStats } from './stats.js';
 
-const clock = new THREE.Clock();
+// Time from the frame timestamps the browser hands the loop; `prev` null: the next frame counts as no time passed
+const clock = { prev: null, elapsed: 0 };
+function tick(now) {
+  const d = clock.prev === null ? 0 : (now - clock.prev) / 1000;
+  clock.prev = now; clock.elapsed += d;
+  return d;
+}
 const lastCam = new THREE.Matrix4(), lastProj = new THREE.Matrix4();
 
 function needsRender(raw) {
@@ -37,12 +43,12 @@ function loop(now) {
   if (now - lastRun < 750 / pace.fps) return;   // too soon for the frame rate we keep (¾ of the interval: screens tick a little unevenly)
   lastRun = now;
   // capped at 0.1 s: a lower cap made walking and turning slow down on devices drawing under 20 frames a second
-  const raw = clock.getDelta(), dt = Math.min(raw, 0.1);
+  const raw = tick(now), dt = Math.min(raw, 0.1);
   const t0 = performance.now(), shadowRedraw = shadows.dirty;
 
   updatePlayer(dt);
   updateMood(dt);
-  updateMusic(dt, clock.elapsedTime);
+  updateMusic(dt, clock.elapsed);
   updateRack(dt);
   updateHover();
   updateHotspots();
@@ -61,7 +67,7 @@ const visible = () => !document.hidden && view.onScreen;
 function resume() {
   if (view.running || !visible()) return;
   view.running = true;
-  clock.getDelta();   // don't count the paused time as one long frame
+  clock.prev = null;   // don't count the paused time as one long frame
   invalidate();
   requestAnimationFrame(loop);
 }
