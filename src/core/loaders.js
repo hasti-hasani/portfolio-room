@@ -49,9 +49,11 @@ export function tex(path, repeat, color = false, onLate) {
   return t;
 }
 
-// A Poly Haven texture set; `maps` picks diffuse (d), normal (n) and roughness (r)
-export function pbr(id, repeat, maps = 'dnr', normalScale = 1) {
-  const p = `textures/${id}/${id}_`, o = { roughness: 1 };
+// A Poly Haven texture set; `maps` picks diffuse (d), normal (n) and roughness (r).
+// Without 'r', `roughness` stands in for the map: for a set whose roughness barely varies, one number looks the same
+// and saves every pixel of that surface a texture read (and the graphics card a few megabytes).
+export function pbr(id, repeat, maps = 'dnr', normalScale = 1, roughness = 1) {
+  const p = `textures/${id}/${id}_`, o = { roughness: maps.includes('r') ? 1 : roughness };
   if (maps.includes('d')) o.map = tex(`${p}diff_${RES}.webp`, repeat, true);
   if (maps.includes('n')) { o.normalMap = tex(`${p}nor_gl_${RES}.webp`, repeat); o.normalScale = new THREE.Vector2(normalScale, normalScale); }
   if (maps.includes('r')) o.roughnessMap = tex(`${p}rough_${RES}.webp`, repeat);

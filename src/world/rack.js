@@ -1,7 +1,7 @@
 // The open clothing rack on the west wall (opens CLO3D Garments), with garments that swing when picked.
 import * as THREE from 'three';
 import P from '../content.js';
-import { C } from '../config.js';
+import { C, HQ } from '../config.js';
 import { rnd } from '../util.js';
 import { part, rod3, addCollider } from '../core/build.js';
 import { mat, brass, LINEN } from '../core/materials.js';
@@ -37,7 +37,7 @@ export function buildRack() {
   const rack = new THREE.Group();
   scene.add(rack);
   const RZ0 = 0.9, RZ1 = 2.2, RX = -2.62, RAIL_Y = 1.7;
-  const rackBrass = brass(), hangerWood = mat(C.wood, { roughness: 0.6 });
+  const rackBrass = brass(), hangerWood = mat(C.wood, { roughness: HQ ? 0.44 : 0.6 });   // with the oak: its roughness × 0.6, as when it had a map
   for (const z of [RZ0 + 0.03, RZ1 - 0.03]) {
     part(rack, C.woodLight, RX - 0.22, RX + 0.22, 0, 0.04, z - 0.025, z + 0.025, 0.01);
     rod3([RX, 0.04, z], [RX, RAIL_Y, z], 0.012, rackBrass, rack);

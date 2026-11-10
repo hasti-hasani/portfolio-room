@@ -4,9 +4,10 @@ import { pbr } from './loaders.js';
 
 export const env = { k: 1 };   // the night mood dims the HDRI light; models loaded later read it
 
-export const OAK = HQ ? pbr('white_oak_veneer', [1, 1]) : {};
+// The oak's and the plaster's roughness maps hardly vary (oak 0.64–0.80, plaster 0.87–1.0): their average instead
+export const OAK = HQ ? pbr('white_oak_veneer', [1, 1], 'dn', 1, 0.73) : {};
 export const LINEN = HQ ? pbr('rough_linen', [2, 2], 'nr', 0.6) : {};
-export const PLASTER = HQ ? pbr('plastered_wall_04', [2, 1], 'nr', 0.5) : {};
+export const PLASTER = HQ ? pbr('plastered_wall_04', [2, 1], 'n', 0.5, 0.93) : {};
 export const VELVET = HQ ? pbr('velour_velvet', [1.5, 1.5], 'nr', 0.5) : {};
 
 // Palette colours that become real wood when the photo textures are available
