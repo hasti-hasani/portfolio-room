@@ -49,7 +49,7 @@ function loop(now) {
 
   const drawn = needsRender(raw);
   checkPerf(raw, drawn);
-  if (drawn) {
+  if (drawn && !frame.hold) {
     if (shadows.dirty) { shadows.dirty = false; renderer.shadowMap.needsUpdate = true; }
     renderer.render(scene, camera);
   }

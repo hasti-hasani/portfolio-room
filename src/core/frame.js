@@ -1,5 +1,8 @@
 // Render on demand: anything that changes the picture calls invalidate(), and the loop draws one new frame.
-export const frame = { dirty: true, idle: 0, marker: 0 };
+// `hold`: nothing is drawn while the studio loads (see main.js). Every frame drawn then built the shaders it needed
+// one at a time, blocking the page — on Intel graphics in Chrome that added up to 20 seconds and more — and the
+// lighting picture (HDRI) arriving midway made most of them build twice.
+export const frame = { dirty: true, idle: 0, marker: 0, hold: true };
 export function invalidate() { frame.dirty = true; }
 
 // Frame pacing: at most `fps` frames a second. 60 on fast screens too (120 Hz phones would otherwise draw twice as much);

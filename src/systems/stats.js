@@ -36,7 +36,7 @@ export function trackStats(raw, drawn, js, shadowRedraw) {
     `code per frame up to ${st.js.toFixed(1)} ms`,
     `jerks while moving: ${st.hitches}${st.last.length ? '   last: ' + st.last.join(', ') : ''}`,
     `startup ms: ${phases.join('  ')}`,
-    `draw calls ${i.calls}   triangles ${Math.round(i.triangles / 1000)}k`,
+    `draw calls ${i.calls}   triangles ${Math.round(i.triangles / 1000)}k   shader programs ${renderer.info.programs?.length ?? '?'}`,
     `resolution ${Math.round(renderer.getPixelRatio() * 100)}%  ${gl.drawingBufferWidth}×${gl.drawingBufferHeight}`,
     gpu ? gl.getParameter(gpu.UNMASKED_RENDERER_WEBGL).slice(0, 60) : '',
   ].join('\n');

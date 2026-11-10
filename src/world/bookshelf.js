@@ -86,6 +86,17 @@ export function buildBookshelf() {
   }
   for (let k = 1500; !packSpines(k); k *= 0.9);
 
+  // The largest font size, up to `start`, at which `text` fits in `max` pixels (never below `min`), set on `g`.
+  // Text width grows in step with the size, so one measurement gives it: shrinking step by step and measuring
+  // each time took seconds for a full shelf on slower laptops.
+  function fit(g, text, max, start, min, font) {
+    g.font = font(start);
+    const w = g.measureText(text).width;
+    if (w <= max) return start;
+    const size = Math.max(min, start * max / w * 0.98);
+    g.font = font(size);
+    return size;
+  }
   function drawSpine(g, b) {
     const [x, y, w, h] = b.rect;
     g.fillStyle = b.col[0]; g.fillRect(x, y, w, h);
@@ -99,17 +110,13 @@ export function buildBookshelf() {
     g.globalAlpha = 1;
     if (b.title) {
       const family = b.serif ? '"DM Serif Display", Georgia, serif' : '"DM Sans", system-ui, sans-serif', weight = b.serif ? '' : '500 ';
-      let fs = thick * 0.42;
-      g.font = `${weight}${fs}px ${family}`;
-      while (fs > 6 && g.measureText(b.title).width > len * 0.54) g.font = `${weight}${fs *= 0.92}px ${family}`;
+      const fs = fit(g, b.title, len * 0.54, thick * 0.42, 6, size => `${weight}${size}px ${family}`);
       g.textBaseline = 'middle';
       g.textAlign = 'left';
       g.fillText(b.title, -len * 0.38, 0);
       if (b.author) {
         const name = b.author.split(',')[0];
-        let fa = Math.min(fs * 0.75, thick * 0.3);
-        g.font = `${fa}px "DM Sans", system-ui, sans-serif`;
-        while (fa > 5 && g.measureText(name).width > len * 0.2) g.font = `${fa *= 0.92}px "DM Sans", system-ui, sans-serif`;
+        fit(g, name, len * 0.2, Math.min(fs * 0.75, thick * 0.3), 5, size => `${size}px "DM Sans", system-ui, sans-serif`);
         g.textAlign = 'right';
         g.globalAlpha = 0.85;
         g.fillText(name, len * 0.38, 0);

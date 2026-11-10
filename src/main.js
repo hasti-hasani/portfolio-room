@@ -3,7 +3,7 @@ import P from './content.js';
 import { HQ } from './config.js';
 import { $ } from './util.js';
 import { state } from './core/state.js';
-import { invalidate, shadows } from './core/frame.js';
+import { frame, invalidate, shadows } from './core/frame.js';
 import { renderer, scene, camera, createRenderer } from './core/renderer.js';
 import { manager, lateManager } from './core/loaders.js';
 import { textTextures } from './core/build.js';
@@ -117,6 +117,7 @@ function ready() {
   renderer.compileAsync(scene, camera).catch(() => {}).finally(() => {
     enter.disabled = false; enter.textContent = 'Step inside';
     mark('shaders');
+    frame.hold = false; invalidate();   // first frame: the room appears behind the card
     // then, without holding up the visitor, the shaders for the other mood (see systems/mood.js)
     (window.requestIdleCallback || setTimeout)(() => warmMoods(camera));
   });
