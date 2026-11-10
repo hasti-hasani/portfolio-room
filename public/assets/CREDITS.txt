@@ -7,7 +7,7 @@ Paintings (supplied by the site owner — not covered by the CC0 note above; che
   art/sadeghi.webp                           Ali Akbar Sadeghi (leaning on the wall right of the door)
 
 Music (CC BY 3.0, https://creativecommons.org/licenses/by/3.0/)
-  music/moonwalk-late-night-cafe.mp3        "Late Night Cafe (Lofi Hip-hop)" by Moonwalk
+  music/moonwalk-late-night-cafe.m4a        "Late Night Cafe (Lofi Hip-hop)" by Moonwalk
                                             https://www.jamendo.com/album/525354
                                             (copy downloaded from https://archive.org/details/jamendo-525354, unmodified)
 

@@ -4,7 +4,7 @@ import { invalidate } from '../core/frame.js';
 import { showHint } from './hint.js';
 import { speakerIt, ledMat, woofer } from '../world/speaker.js';
 
-const MUSIC = { src: 'assets/music/moonwalk-late-night-cafe.mp3', title: '“Late Night Cafe” — Moonwalk',
+const MUSIC = { src: 'assets/music/moonwalk-late-night-cafe.m4a', title: '“Late Night Cafe” — Moonwalk',
   credit: '♪ “Late Night Cafe” by Moonwalk · CC BY 3.0 · via Jamendo' };
 // The fade runs on a Web Audio gain: iPhones ignore an audio element's volume, so it would never fade out and pause
 export const music = { el: null, ctx: null, gain: null, on: false };
