@@ -25,6 +25,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run lint   # a lint error stops the deploy: the live site keeps its last good version
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
