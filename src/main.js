@@ -1,5 +1,4 @@
 // Entry point: builds the studio in a fixed order, then starts the loop.
-import './styles.css';
 import P from './content.js';
 import { HQ } from './config.js';
 import { $ } from './util.js';
