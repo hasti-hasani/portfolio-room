@@ -64,7 +64,8 @@ export function buildRack() {
     };
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) {
-      const t = -pos.getY(i) / len, a = Math.atan2(pos.getZ(i), pos.getX(i));
+      // clamped: the top row can come out a hair above 0 after translate(), and t ** 1.3 of a negative t is NaN
+      const t = Math.max(0, -pos.getY(i) / len), a = Math.atan2(pos.getZ(i), pos.getX(i));
       const w = width(t), d = depth * Math.min(1, 0.3 + t * 5);
       const x = Math.cos(a) * w;
       let z = Math.sin(a) * d;
