@@ -1,4 +1,6 @@
-assets/sounds/kenney_rpg-audio.zip
+node_modules/
+dist/
+_source/
 .vercel/
 .DS_Store
 Thumbs.db
