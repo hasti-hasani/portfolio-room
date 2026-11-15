@@ -35,3 +35,6 @@ and the soil mesh inside potted_plant_02 was simplified. The chair's painted col
 Code and fonts served from vendor/ (copied unmodified, so the page doesn't depend on a CDN or Google Fonts)
   vendor/three/                             three.js r160 and the examples/jsm files it uses — MIT License, © three.js authors
   vendor/fonts/                             DM Sans, DM Serif Display (latin subset, from Google Fonts) — SIL Open Font License 1.1
+
+Site owner (tuxedo cat kit, supplied by the site owner)
+  models/tuxedo-cat/tuxedo-cat.glb          the studio cat

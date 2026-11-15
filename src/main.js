@@ -23,6 +23,7 @@ import { buildWhiteboard } from './world/whiteboard.js';
 import { buildSpeaker, speakerIt, woofer, tweeter, led } from './world/speaker.js';
 import { buildLounge } from './world/lounge.js';
 import { buildPaintings } from './world/paintings.js';
+import { buildCat } from './world/cat.js';
 
 import { makeInteractive } from './systems/interactives.js';
 import { buildMarker, marker } from './systems/player.js';
@@ -72,6 +73,7 @@ buildSpeaker();
 speakerIt.action = toggleMusic;   // the speaker plays in place, no walking
 buildLounge();
 buildPaintings();
+buildCat();      // after all the furniture: the cat walks round every collider added so far
 buildMarker();
 mark('build');
 

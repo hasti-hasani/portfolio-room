@@ -8,6 +8,7 @@ import { keys, goTo, walkTo, addLook } from './player.js';
 import { playClick } from './audio.js';
 import { hideHint } from './hint.js';
 import { rackSway } from '../world/rack.js';
+import { catAt, petCat } from '../world/cat.js';
 import { openPanel, closePanel } from '../ui/panels.js';
 import { closeSimple } from '../ui/simple.js';
 
@@ -68,7 +69,11 @@ let hoverAt = null;   // the last mouse position not yet tested for hover
 // Hover is tested once per frame in the main loop, not on every mouse event
 export function updateHover() {
   if (!hoverAt) return;
-  if (state.mode === 'play' && !ptr.down && !state.tween) setHover(pick(hoverAt).it || null);
+  if (state.mode === 'play' && !ptr.down && !state.tween) {
+    const it = pick(hoverAt).it || null;
+    setHover(it);
+    if (!it) canvas.classList.toggle('hovering', catAt(hoverAt));   // a pointer over the cat too
+  }
   hoverAt = null;
 }
 
@@ -103,6 +108,7 @@ export function initInput() {
     canvas.classList.remove('dragging');
     if (ptr.dragged) return;
     if (state.panel) { closePanel(); return; }
+    if (petCat(e)) return;   // the cat hops instead of you walking to the floor behind it
     const { hit, it } = pick(e);
     if (it) { select(it); return; }
     if (hit?.object.userData.walkable) walkTo(hit.point);

@@ -12,6 +12,7 @@ import { updateHotspots } from './interactives.js';
 import { updateMood, moodChanging } from './mood.js';
 import { updateMusic } from './music.js';
 import { updateRack, rackMoving } from '../world/rack.js';
+import { updateCat, catWantsFrame } from '../world/cat.js';
 import { checkPerf } from './quality.js';
 import { statsOn, trackStats } from './stats.js';
 
@@ -22,7 +23,8 @@ function needsRender(raw) {
   camera.updateMatrixWorld();
   const moved = !lastCam.equals(camera.matrixWorld) || !lastProj.equals(camera.projectionMatrix);
   const busy = state.mode === 'intro' || moodChanging() || rackMoving()
-    || marker.material.opacity > 0 || frame.marker > 0;   // incl. the frame the marker fades out
+    || marker.material.opacity > 0 || frame.marker > 0   // incl. the frame the marker fades out
+    || catWantsFrame();                                  // the cat is in view (30 frames a second)
   frame.marker = marker.material.opacity;
   if (!(moved || busy || frame.dirty || (frame.idle += raw) > 1)) return false;
   frame.dirty = false; frame.idle = 0;
@@ -44,6 +46,7 @@ function loop(now) {
   updateMood(dt);
   updateMusic(dt, clock.elapsedTime);
   updateRack(dt);
+  updateCat(dt);
   updateHover();
   updateHotspots();
 
